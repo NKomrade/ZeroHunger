@@ -9,8 +9,8 @@ import SignUp from './pages/signup';
 import DonorDashboard from './pages/donor/DonorDashboard';
 import RecipientDashboard from './pages/recipient/RecipientDashboard';
 import VolunteerDashboard from './pages/volunteer/VolunteerDashboard';
-import DonationHistory from './pages/donor/DonationHistory'; // Add this import for the donor history page
-import ScheduleDonation from './pages/donor/ScheduleDonation'; // Add this import for the schedule donation page
+import DonationHistory from './pages/donor/DonationHistory'; 
+import ScheduleDonation from './pages/donor/ScheduleDonation';
 
 const App = () => {
   return (
