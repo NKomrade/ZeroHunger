@@ -5,7 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 const Navbar = () => {
   return (
     <nav className="bg-green-600 p-4 flex justify-between items-center">
-      <div className="text-white font-bold text-lg">ZeroHunger</div>
+      <div className="text-white font-bold text-lg"><Link to="/">ZeroHunger</Link></div>
       <div>
         <Link to="/" className="text-white mx-2 hover:underline hover:text-green-300 transition duration-200">Home</Link>
         <Link to="/donate" className="text-white mx-2 hover:underline hover:text-green-300 transition duration-200">Donate</Link>
