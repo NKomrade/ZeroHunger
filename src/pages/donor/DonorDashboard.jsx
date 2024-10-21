@@ -51,6 +51,8 @@ const Navbar = () => {
         <Link to="/donate" className="text-white mx-2 hover:underline hover:text-green-300 transition duration-200">Donate</Link>
         <Link to="/about" className="text-white mx-2 hover:underline hover:text-green-300 transition duration-200">About</Link>
         <Link to="/contact" className="text-white mx-2 hover:underline hover:text-green-300 transition duration-200">Contact</Link>
+        <Link to="/login" className="text-white mx-2 hover:underline hover:text-green-300 transition duration-200">Login</Link>
+        <Link to="/signup" className="bg-white text-green-600 px-4 py-2 rounded-full hover:bg-green-200 transition duration-200">Sign up</Link>
       </div>
     </nav>
   );

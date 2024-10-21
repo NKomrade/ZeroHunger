@@ -11,6 +11,7 @@ import RecipientDashboard from './pages/recipient/RecipientDashboard';
 import VolunteerDashboard from './pages/volunteer/VolunteerDashboard';
 import DonationHistory from './pages/donor/DonationHistory'; 
 import ScheduleDonation from './pages/donor/ScheduleDonation';
+import Profile from './pages/donor/Profile';
 
 const App = () => {
   return (
@@ -28,7 +29,8 @@ const App = () => {
         <Route path="/donor/dashboard" element={<DonorDashboard />} />
         <Route path="/donor/history" element={<DonationHistory />} />
         <Route path="/donor/new-donation" element={<ScheduleDonation />} />
-        
+        <Route path="/donor/profile" element={<Profile />} />
+
         {/* Recipient Dashboard Route */}
         <Route path="/recipient/dashboard" element={<RecipientDashboard />} />
         

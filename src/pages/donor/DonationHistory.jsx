@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
 // Mock Donation History Data
 const mockDonationHistory = [
@@ -25,6 +26,40 @@ const mockDonationHistory = [
   },
 ];
 
+// Sidebar Component (Same as in DonorDashboard)
+const Sidebar = () => {
+  return (
+    <div className="w-64 bg-green-600 text-white h-screen flex flex-col p-4">
+      <h2 className="text-2xl font-bold mb-6">Donor Dashboard</h2>
+      <nav className="flex flex-col space-y-4">
+        <Link to="/donor/dashboard" className="hover:bg-green-700 p-2 rounded">Dashboard Overview</Link>
+        <Link to="/donor/history" className="hover:bg-green-700 p-2 rounded">Donation History</Link>
+        <Link to="/donor/new-donation" className="hover:bg-green-700 p-2 rounded">Schedule Donation</Link>
+        <Link to="/donor/profile" className="hover:bg-green-700 p-2 rounded">Profile</Link>
+      </nav>
+    </div>
+  );
+};
+
+// Navbar Component (Same as in DonorDashboard)
+const Navbar = () => {
+  return (
+    <nav className="bg-green-600 p-4 flex justify-between items-center">
+      <div className="text-white font-bold text-lg">
+        <Link to="/">ZeroHunger</Link>
+      </div>
+      <div>
+        <Link to="/" className="text-white mx-2 hover:underline hover:text-green-300 transition duration-200">Home</Link>
+        <Link to="/donate" className="text-white mx-2 hover:underline hover:text-green-300 transition duration-200">Donate</Link>
+        <Link to="/about" className="text-white mx-2 hover:underline hover:text-green-300 transition duration-200">About</Link>
+        <Link to="/contact" className="text-white mx-2 hover:underline hover:text-green-300 transition duration-200">Contact</Link>
+        <Link to="/login" className="text-white mx-2 hover:bg-green-500 transition duration-200 rounded-full px-4 py-2">Login</Link>
+        <Link to="/signup" className="bg-white text-green-600 px-4 py-2 rounded-full hover:bg-green-200 transition duration-200">Sign up</Link>
+      </div>
+    </nav>
+  );
+};
+
 // DonationHistory Component
 const DonationHistory = () => {
   const [donationHistory, setDonationHistory] = useState([]);
@@ -36,32 +71,11 @@ const DonationHistory = () => {
 
   return (
     <div>
-      <nav className="bg-green-600 p-4 flex justify-between items-center">
-        <div className="text-white font-bold text-lg">ZeroHunger</div>
-        <div>
-          <Link to="/" className="text-white mx-2 hover:underline hover:text-green-300 transition duration-200">Home</Link>
-          <Link to="/donate" className="text-white mx-2 hover:underline hover:text-green-300 transition duration-200">Donate</Link>
-          <Link to="/about" className="text-white mx-2 hover:underline hover:text-green-300 transition duration-200">About</Link>
-          <Link to="/contact" className="text-white mx-2 hover:underline hover:text-green-300 transition duration-200">Contact</Link>
-          <Link to="/login" className="text-white mx-2 hover:underline hover:text-green-300 transition duration-200">Login</Link>
-          <Link to="/signup" className="text-white mx-2 hover:underline hover:text-green-300 transition duration-200">Sign Up</Link>
-          
-        </div>
-      </nav>
-
+      <Navbar /> {/* Navbar at the top */}
       <div className="flex">
-        <div className="w-64 bg-green-600 text-white h-screen flex flex-col p-4">
-          <h2 className="text-2xl font-bold mb-6">Donor Dashboard</h2>
-          <nav className="flex flex-col space-y-4">
-          <Link to="/donor/dashboard" className="hover:bg-green-700 p-2 rounded">Dashboard Overview</Link>
-          <Link to="/donor/history" className="hover:bg-green-700 p-2 rounded">Donation History</Link>
-          <Link to="/donor/new-donation" className="hover:bg-green-700 p-2 rounded">Schedule Donation</Link>
-          <Link to="/donor/profile" className="hover:bg-green-700 p-2 rounded">Profile</Link>
-          </nav>
-        </div>
-
+        <Sidebar /> {/* Sidebar on the left */}
         <div className="flex-grow p-6">
-          <h1 className="text-3xl font-bold mb-6 text-green-600">Donation History</h1>
+          <h1 className="text-4xl font-bold mb-6 text-green-600">Donation History</h1>
           <div className="bg-gray-50 shadow rounded-lg p-4">
             {donationHistory.length === 0 ? (
               <p>No donations found.</p>
