@@ -35,7 +35,7 @@ const Sidebar = () => {
         <Link to="/donor/dashboard" className="hover:bg-green-700 p-2 rounded">Dashboard Overview</Link>
         <Link to="/donor/history" className="hover:bg-green-700 p-2 rounded">Donation History</Link>
         <Link to="/donor/new-donation" className="hover:bg-green-700 p-2 rounded">Schedule Donation</Link>
-        <Link to="/profile" className="hover:bg-green-700 p-2 rounded">Profile</Link>
+        <Link to="/donor/profile" className="hover:bg-green-700 p-2 rounded">Profile</Link>
       </nav>
     </div>
   );

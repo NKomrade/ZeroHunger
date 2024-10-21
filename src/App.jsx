@@ -26,8 +26,8 @@ const App = () => {
         
         {/* Donor Dashboard Routes */}
         <Route path="/donor/dashboard" element={<DonorDashboard />} />
-        <Route path="/donor/history" element={<DonationHistory />} /> {/* Separate page for donation history */}
-        <Route path="/donor/new-donation" element={<ScheduleDonation />} /> {/* Separate page for scheduling donations */}
+        <Route path="/donor/history" element={<DonationHistory />} />
+        <Route path="/donor/new-donation" element={<ScheduleDonation />} />
         
         {/* Recipient Dashboard Route */}
         <Route path="/recipient/dashboard" element={<RecipientDashboard />} />

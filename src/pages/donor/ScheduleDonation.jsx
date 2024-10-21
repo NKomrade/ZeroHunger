@@ -38,12 +38,12 @@ const ScheduleDonation = () => {
       <nav className="bg-green-600 p-4 flex justify-between items-center">
         <div className="text-white font-bold text-lg">ZeroHunger</div>
         <div>
-          <a href="/" className="text-white mx-2 hover:underline hover:text-green-300 transition duration-200">Home</a>
-          <a href="/donate" className="text-white mx-2 hover:underline hover:text-green-300 transition duration-200">Donate</a>
-          <a href="/about" className="text-white mx-2 hover:underline hover:text-green-300 transition duration-200">About</a>
-          <a href="/contact" className="text-white mx-2 hover:underline hover:text-green-300 transition duration-200">Contact</a>
-          <a href="/login" className="text-white mx-2 hover:bg-green-500 transition duration-200 rounded-full px-4 py-2">Log in</a>
-          <a href="/signup" className="bg-white text-green-600 px-4 py-2 rounded-full hover:bg-green-200 transition duration-200">Sign up</a>
+          <Link to="/" className="text-white mx-2 hover:underline hover:text-green-300 transition duration-200">Home</Link>
+          <Link to="/donate" className="text-white mx-2 hover:underline hover:text-green-300 transition duration-200">Donate</Link>
+          <Link to="/about" className="text-white mx-2 hover:underline hover:text-green-300 transition duration-200">About</Link>
+          <Link to="/contact" className="text-white mx-2 hover:underline hover:text-green-300 transition duration-200">Contact</Link>
+          <Link to="/login" className="text-white mx-2 hover:underline hover:text-green-300 transition duration-200">Login</Link>
+          <Link to="/signup" className="text-white mx-2 hover:underline hover:text-green-300 transition duration-200">Sign Up</Link>
         </div>
       </nav>
 
@@ -51,10 +51,10 @@ const ScheduleDonation = () => {
         <div className="w-64 bg-green-600 text-white h-screen flex flex-col p-4">
           <h2 className="text-2xl font-bold mb-6">Donor Dashboard</h2>
           <nav className="flex flex-col space-y-4">
-            <a href="/donor/dashboard" className="hover:bg-green-700 p-2 rounded">Dashboard Overview</a>
-            <a href="/donor/history" className="hover:bg-green-700 p-2 rounded">Donation History</a>
-            <a href="/donor/new-donation" className="hover:bg-green-700 p-2 rounded">Schedule Donation</a>
-            <a href="/profile" className="hover:bg-green-700 p-2 rounded">Profile</a>
+          <Link to="/donor/dashboard" className="hover:bg-green-700 p-2 rounded">Dashboard Overview</Link>
+          <Link to="/donor/history" className="hover:bg-green-700 p-2 rounded">Donation History</Link>
+          <Link to="/donor/new-donation" className="hover:bg-green-700 p-2 rounded">Schedule Donation</Link>
+          <Link to="/donor/profile" className="hover:bg-green-700 p-2 rounded">Profile</Link>
           </nav>
         </div>
 
