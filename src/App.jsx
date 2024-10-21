@@ -5,7 +5,7 @@ import Donate from './pages/Donate';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import Login from './pages/Login';
-import Signup from './pages/Signup';
+import SignUp from './pages/signup';
 import DonorDashboard from './pages/donor/DonorDashboard';
 import RecipientDashboard from './pages/recipient/RecipientDashboard';
 import VolunteerDashboard from './pages/volunteer/VolunteerDashboard';
@@ -19,7 +19,7 @@ const App = () => {
         <Route path="/About" element={<About />} />
         <Route path="/Contact" element={<Contact />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/Signup" element={<Signup />} />
+        <Route path="/signup" element={<SignUp />} />
         <Route path="/donor/dashboard" element={<DonorDashboard />} />
         <Route path="/recipient/dashboard" element={<RecipientDashboard />} />
         <Route path="/volunteer/dashboard" element={<VolunteerDashboard />} />
