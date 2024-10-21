@@ -5,7 +5,7 @@ import Donate from './pages/Donate';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import Login from './pages/Login';
-import SignUp from './pages/SignUp'; // corrected case to 'SignUp'
+import SignUp from './pages/signup'; 
 import DonorDashboard from './pages/donor/DonorDashboard';
 import RecipientDashboard from './pages/recipient/RecipientDashboard';
 import VolunteerDashboard from './pages/volunteer/VolunteerDashboard';
