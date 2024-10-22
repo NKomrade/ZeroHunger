@@ -4,19 +4,21 @@ import { Link, useNavigate } from 'react-router-dom';
 // Navbar Component
 const Navbar = () => {
   return (
-    <nav className="bg-green-600 p-4 flex justify-between items-center">
+    <nav className="bg-blue-500 p-4 flex justify-between items-center">
       <div className="text-white font-bold text-lg"><Link to="/">ZeroHunger</Link></div>
       <div>
-        <Link to="/" className="text-white mx-2 hover:underline hover:text-green-300 transition duration-200">Home</Link>
-        <Link to="/donate" className="text-white mx-2 hover:underline hover:text-green-300 transition duration-200">Donate</Link>
-        <Link to="/about" className="text-white mx-2 hover:underline hover:text-green-300 transition duration-200">About</Link>
-        <Link to="/contact" className="text-white mx-2 hover:underline hover:text-green-300 transition duration-200">Contact</Link>
-        <Link to="/login" className="text-white mx-2 hover:bg-green-500 transition duration-200 rounded-full px-4 py-2">Log in</Link>
-        <Link to="/signup" className="bg-white text-green-600 px-4 py-2 rounded-full hover:bg-green-200 transition duration-200">Sign up</Link>
+        <Link to="/" className="text-white mx-2 hover:underline hover: transition duration-200">Home</Link>
+        <Link to="/donate" className="text-white mx-2 hover:underline hover: transition duration-200">Donate</Link>
+        <Link to="/about" className="text-white mx-2 hover:underline hover: transition duration-200">About</Link>
+        <Link to="/contact" className="text-white mx-2 hover:underline hover: transition duration-200">Contact</Link>
+        <Link to="/login" className="text-white mx-2 hover:text-blue-200 transition duration-200 rounded-full px-4 py-2">Log in</Link>
+        <Link to="/signup" className="bg-yellow-100 text-neutral-800 px-4 py-2 rounded-full hover:transition duration-200">Sign up</Link>
       </div>
     </nav>
   );
 };
+
+// Hero Component
 const Hero = () => {
   const navigate = useNavigate();
 
@@ -34,7 +36,7 @@ const Hero = () => {
       setNextImageIndex((prevIndex) =>
         prevIndex === images.length - 1 ? 0 : prevIndex + 1
       );
-    }, 2000); // Change image every 5 seconds
+    }, 2000); 
 
     return () => clearInterval(interval);
   }, [images.length]);
@@ -43,7 +45,7 @@ const Hero = () => {
     if (nextImageIndex !== currentImageIndex) {
       const timer = setTimeout(() => {
         setCurrentImageIndex(nextImageIndex);
-      }, 300); // Wait for fade-out before changing current image to match new transition duration
+      }, 300); 
 
       return () => clearTimeout(timer);
     }
@@ -54,7 +56,7 @@ const Hero = () => {
   };
 
   return (
-    <div className="relative w-full h-96 overflow-hidden">
+    <div className="relative w-full h-96 overflow-hidden bg-yellow-100">
       {images.map((image, index) => (
         <img
           key={index}
@@ -62,14 +64,14 @@ const Hero = () => {
           alt={`Hero ${index + 1}`}
           className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-300 ${
             index === currentImageIndex ? 'opacity-100' : 'opacity-0'
-          }`} // Changed duration from 500 to 300
+          }`} 
         />
       ))}
       <div className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-50">
         <h1 className="text-4xl font-bold text-white">Welcome to ZeroHunger</h1>
         <p className="mt-2 text-white">Tackling food wastage and feeding those in need with our decentralized initiative</p>
         <button
-          className="bg-green-600 text-white px-4 py-2 rounded mt-4 hover:bg-green-500"
+          className="bg-blue-500 text-white px-4 py-2 rounded mt-4 hover:bg-blue-400"
           onClick={handleGetInvolved}
         >
           Get Involved
@@ -92,7 +94,7 @@ const Hero = () => {
 // Donation Component
 const Donation = () => {
   return (
-      <div className="border p-4 rounded-lg text-center overflow-hidden w-96 h-112">
+      <div className="border p-4 rounded-lg text-center overflow-hidden w-96 h-112 bg-yellow-100">
         <Link to="/donor/dashboard" className="w-full">
         <img 
           src="/image-1.jpg" 
@@ -109,7 +111,7 @@ const Donation = () => {
 // Recipient Component
 const Recipient = () => {
   return (
-    <div className="border p-4 rounded-lg text-center overflow-hidden w-96 h-112">
+    <div className="border p-4 rounded-lg text-center overflow-hidden w-96 h-112 bg-yellow-100">
       <Link to="/recipient/dashboard" className="w-full">
       <img 
         src="/image-2.jpg" 
@@ -126,7 +128,7 @@ const Recipient = () => {
 // Volunteer Component
 const Volunteer = () => {
   return (
-    <div className="border p-4 rounded-lg text-center overflow-hidden w-96 h-112">
+    <div className="border p-4 rounded-lg text-center overflow-hidden w-96 h-112 bg-yellow-100">
       <Link to="/volunteer/dashboard" className="w-full">
       <img 
         src="/image-3.jpg" 
@@ -143,7 +145,7 @@ const Volunteer = () => {
 // Overview Component
 const Overview = () => {
   return (
-    <div className="flex flex-col items-center p-6 bg-gray-50 rounded-lg mt-8 shadow-lg">
+    <div className="flex flex-col items-center p-6 bg-yellow-100 rounded-lg mt-8 shadow-lg">
       <h2 className="text-4xl font-bold mb-6 text-neutral-950">Overview of ZeroHunger</h2>
       <div className="flex justify-center items-center w-full">
         <img 
@@ -168,7 +170,7 @@ const Overview = () => {
             of those who are struggling and promote a culture of giving and sharing.
           </p>
           <Link to="/about">
-            <button className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-500 transition duration-200 mt-4">
+            <button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-400 transition duration-200 mt-4">
               Join Us Now
             </button>
           </Link>
@@ -181,7 +183,7 @@ const Overview = () => {
 const HomePage = () => {
   console.log("HomePage rendered"); 
   return (
-    <div>
+    <div className="bg-yellow-100 min-h-screen"> {/* Apply background color to entire page */}
       <Navbar />
       <Hero />
       <div className="flex justify-around p-4">
@@ -189,7 +191,7 @@ const HomePage = () => {
         <Recipient />
         <Volunteer />
       </div>
-      <Overview /> {/* Added Overview Component */}
+      <Overview /> 
     </div>
   );
 };

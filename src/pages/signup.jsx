@@ -4,15 +4,15 @@ import { Link } from 'react-router-dom'; // Ensure you have react-router-dom for
 // Navbar Component
 const Navbar = () => {
   return (
-    <nav className="bg-green-600 p-4 flex justify-between items-center">
-      <div className="text-white font-bold text-lg">ZeroHunger</div>
+    <nav className="bg-blue-500 p-4 flex justify-between items-center">
+      <div className="text-white font-bold text-lg"><Link to="/">ZeroHunger</Link></div>
       <div>
-        <Link to="/" className="text-white mx-2 hover:underline hover:text-green-300 transition duration-200">Home</Link>
-        <Link to="/Donate" className="text-white mx-2 hover:underline hover:text-green-300 transition duration-200">Donate</Link>
-        <Link to="/About" className="text-white mx-2 hover:underline hover:text-green-300 transition duration-200">About</Link>
-        <Link to="/Contact" className="text-white mx-2 hover:underline hover:text-green-300 transition duration-200">Contact</Link>
-        <Link to="/Login" className="text-white mx-2 hover:bg-green-500 transition duration-200 rounded-full px-4 py-2">Log in</Link>
-        <Link to="/Signup" className="bg-white text-green-600 px-4 py-2 rounded-full hover:bg-green-200 transition duration-200">Sign up</Link>
+        <Link to="/" className="text-white mx-2 hover:underline hover:text-blue-200 transition duration-200">Home</Link>
+        <Link to="/Donate" className="text-white mx-2 hover:underline hover:text-blue-200 transition duration-200">Donate</Link>
+        <Link to="/About" className="text-white mx-2 hover:underline hover:text-blue-200 transition duration-200">About</Link>
+        <Link to="/Contact" className="text-white mx-2 hover:underline hover:text-blue-200 transition duration-200">Contact</Link>
+        <Link to="/Login" className="text-white mx-2 hover:bg-blue-400 transition duration-200 rounded-full px-4 py-2">Log in</Link>
+        <Link to="/Signup" className="bg-yellow-100 text-neutral-800 px-4 py-2 rounded-full hover:bg-yellow-200 transition duration-200">Sign up</Link>
       </div>
     </nav>
   );
@@ -45,9 +45,9 @@ const SignUp = () => {
   };
 
   return (
-    <div>
+    <div className="bg-yellow-100 min-h-screen">
       <Navbar />
-      <div className="max-w-md mx-auto p-6 bg-green-500 rounded-lg shadow-lg mt-10">
+      <div className="max-w-md mx-auto p-6 bg-blue-500 rounded-lg shadow-lg mt-10">
         <h2 className="text-2xl font-bold mb-4 text-white">Sign Up</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
@@ -57,7 +57,7 @@ const SignUp = () => {
               id="role"
               value={formData.role}
               onChange={handleChange}
-              className="w-full border rounded p-2"
+              className="w-full border rounded p-2 placeholder-gray-400"
               required
             >
               <option value="" disabled>Select your role</option>
@@ -76,7 +76,7 @@ const SignUp = () => {
               value={formData.name}
               onChange={handleChange}
               placeholder="Enter your name"
-              className="w-full border rounded p-2"
+              className="w-full border rounded p-2 placeholder-gray-400"
               required
             />
           </div>
@@ -90,7 +90,7 @@ const SignUp = () => {
               value={formData.mobile}
               onChange={handleChange}
               placeholder="Enter your mobile number"
-              className="w-full border rounded p-2"
+              className="w-full border rounded p-2 placeholder-gray-400"
               required
             />
           </div>
@@ -104,7 +104,7 @@ const SignUp = () => {
               value={formData.email}
               onChange={handleChange}
               placeholder="Enter your email"
-              className="w-full border rounded p-2"
+              className="w-full border rounded p-2 placeholder-gray-400"
               required
             />
           </div>
@@ -118,7 +118,7 @@ const SignUp = () => {
               value={formData.password}
               onChange={handleChange}
               placeholder="Create a password"
-              className="w-full border rounded p-2"
+              className="w-full border rounded p-2 placeholder-gray-400"
               required
             />
           </div>
@@ -132,7 +132,7 @@ const SignUp = () => {
               value={formData.venueName}
               onChange={handleChange}
               placeholder="Enter the name of the venue"
-              className="w-full border rounded p-2"
+              className="w-full border rounded p-2 placeholder-gray-400"
               required
             />
           </div>
@@ -146,7 +146,7 @@ const SignUp = () => {
               value={formData.address}
               onChange={handleChange}
               placeholder="Enter your address"
-              className="w-full border rounded p-2"
+              className="w-full border rounded p-2 placeholder-gray-400"
               required
             />
           </div>
@@ -160,12 +160,12 @@ const SignUp = () => {
               value={formData.fssaiNumber}
               onChange={handleChange}
               placeholder="Enter your FSSAI number"
-              className="w-full border rounded p-2"
+              className="w-full border rounded p-2 placeholder-gray-400"
               required
             />
           </div>
 
-          <button type="submit" className="w-full bg-green-700 text-white p-2 rounded hover:bg-green-600 transition duration-200">
+          <button type="submit" className="w-full bg-blue-700 text-white p-2 rounded hover:bg-blue-600 transition duration-200">
             Submit
           </button>
         </form>
