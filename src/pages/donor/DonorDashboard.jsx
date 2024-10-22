@@ -41,17 +41,18 @@ const Sidebar = () => {
   );
 };
 
-// Navbar Component (could be reused globally across your app)
 const Navbar = () => {
   return (
     <nav className="bg-green-600 p-4 flex justify-between items-center">
-      <div className="text-white font-bold text-lg">ZeroHunger</div>
+      <div className="text-white font-bold text-lg">
+        <Link to="/">ZeroHunger</Link>
+      </div>
       <div>
         <Link to="/" className="text-white mx-2 hover:underline hover:text-green-300 transition duration-200">Home</Link>
         <Link to="/donate" className="text-white mx-2 hover:underline hover:text-green-300 transition duration-200">Donate</Link>
         <Link to="/about" className="text-white mx-2 hover:underline hover:text-green-300 transition duration-200">About</Link>
         <Link to="/contact" className="text-white mx-2 hover:underline hover:text-green-300 transition duration-200">Contact</Link>
-        <Link to="/login" className="text-white mx-2 hover:underline hover:text-green-300 transition duration-200">Login</Link>
+        <Link to="/login" className="text-white mx-2 hover:bg-green-500 transition duration-200 rounded-full px-4 py-2">Log in</Link>
         <Link to="/signup" className="bg-white text-green-600 px-4 py-2 rounded-full hover:bg-green-200 transition duration-200">Sign up</Link>
       </div>
     </nav>
