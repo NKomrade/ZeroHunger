@@ -20,22 +20,22 @@ const Contact = () => {
   };
 
   return (
-    <div className="bg-yellow-100 min-h-screen"> {/* Full page background color */}
+    <div className="bg-white min-h-screen"> {/* Full page background color */}
       {/* Navbar Component */}
       <nav className="bg-blue-500 p-4 flex justify-between items-center">
         <div className="text-white font-bold text-lg"><Link to="/">ZeroHunger</Link></div>
         <div>
-          <Link to="/" className="text-white mx-2 hover:underline hover:text-blue-200 transition duration-200">Home</Link>
-          <Link to="/Donate" className="text-white mx-2 hover:underline hover:text-blue-200 transition duration-200">Donate</Link>
-          <Link to="/About" className="text-white mx-2 hover:underline hover:text-blue-200 transition duration-200">About</Link>
-          <Link to="/Contact" className="text-white mx-2 hover:underline hover:text-blue-200 transition duration-200">Contact</Link>
-          <Link to="/Login" className="text-white mx-2 hover:bg-blue-400 transition duration-200 rounded-full px-4 py-2">Log in</Link>
-          <Link to="/Signup" className="bg-yellow-100 text-neutral-800 px-4 py-2 rounded-full hover:bg-yellow-200 transition duration-200">Sign up</Link>
+          <Link to="/" className="text-white mx-2 hover:underline hover: transition duration-200">Home</Link>
+          <Link to="/donate" className="text-white mx-2 hover:underline hover: transition duration-200">Donate</Link>
+          <Link to="/about" className="text-white mx-2 hover:underline hover: transition duration-200">About</Link>
+          <Link to="/contact" className="text-white mx-2 hover:underline hover: transition duration-200">Contact</Link>
+          <Link to="/login" className="text-white mx-2 hover:bg-blue-400 transition duration-200 rounded-full px-4 py-2">Log in</Link>
+          <Link to="/signup" className="bg-white text-neutral-800 px-4 py-2 rounded-full hover:bg-neutral-200 transition duration-200">Sign up</Link>
         </div>
       </nav>
 
       {/* Contact Section */}
-      <div className="flex flex-col items-center p-6 bg-yellow-100 rounded-lg mt-8 w-full">
+      <div className="flex flex-col items-center p-6 rounded-lg mt-8 w-full">
         <h1 className="text-4xl font-bold mb-6 text-neutral-900">Contact Us</h1>
         <form onSubmit={handleSubmit} className="w-full max-w-md">
           <div className="mb-4">

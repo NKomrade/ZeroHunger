@@ -28,26 +28,25 @@ const Profile = () => {
   };
 
   return (
-    <div>
-      {/* Navbar */}
-      <nav className="bg-blue-500 p-4 flex justify-between items-center">
+    <div className="flex flex-col min-h-screen">
+      {/* Frozen Navbar */}
+      <nav className="bg-blue-500 p-4 flex justify-between items-center sticky top-0 z-50">
         <div className="text-white font-bold text-lg">
           <Link to="/">ZeroHunger</Link>
         </div>
         <div>
-          <Link to="/" className="text-white mx-2 hover:underline hover:text-blue-200 transition duration-200">Home</Link>
-          <Link to="/donate" className="text-white mx-2 hover:underline hover:text-blue-200 transition duration-200">Donate</Link>
-          <Link to="/about" className="text-white mx-2 hover:underline hover:text-blue-200 transition duration-200">About</Link>
-          <Link to="/contact" className="text-white mx-2 hover:underline hover:text-blue-200 transition duration-200">Contact</Link>
-          <Link to="/login" className="text-white mx-2 hover:bg-blue-400 transition duration-200 rounded-full px-4 py-2">Login</Link>
-          <Link to="/signup" className="bg-yellow-100 text-neutral-800 px-4 py-2 rounded-full hover:bg-yellow-200 transition duration-200">Sign up</Link>
+          <Link to="/" className="text-white mx-2 hover:underline transition duration-200">Home</Link>
+          <Link to="/donate" className="text-white mx-2 hover:underline transition duration-200">Donate</Link>
+          <Link to="/about" className="text-white mx-2 hover:underline transition duration-200">About</Link>
+          <Link to="/contact" className="text-white mx-2 hover:underline transition duration-200">Contact</Link>
+          <Link to="/login" className="text-white mx-2 hover:bg-blue-400 transition duration-200 rounded-full px-4 py-2">Log in</Link>
+          <Link to="/signup" className="bg-white text-neutral-800 px-4 py-2 rounded-full hover:bg-neutral-200 transition duration-200">Sign up</Link>
         </div>
       </nav>
 
-      <div className="flex bg-yellow-100">
-        {/* Sidebar */}
-        <div className="w-64 bg-blue-500 text-white h-screen flex flex-col p-4">
-          <h2 className="text-2xl font-bold mb-6">Donor Dashboard</h2>
+      <div className="flex flex-grow">
+        {/* Sticky Sidebar */}
+        <div className="fixed w-64 bg-blue-500 text-white h-[calc(100vh-60px)] p-4">
           <nav className="flex flex-col space-y-4">
             <Link to="/donor/dashboard" className="hover:bg-blue-600 p-2 rounded">Dashboard Overview</Link>
             <Link to="/donor/history" className="hover:bg-blue-600 p-2 rounded">Donation History</Link>
@@ -56,8 +55,8 @@ const Profile = () => {
           </nav>
         </div>
 
-        {/* Main Content */}
-        <div className="flex-grow p-6">
+        {/* Main Content with left margin for sidebar */}
+        <div className="flex-grow ml-64 p-6">
           <h1 className="text-3xl font-bold mb-6 text-blue-500">Profile</h1>
 
           {/* Profile Section */}

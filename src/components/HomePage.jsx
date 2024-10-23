@@ -11,8 +11,8 @@ const Navbar = () => {
         <Link to="/donate" className="text-white mx-2 hover:underline hover: transition duration-200">Donate</Link>
         <Link to="/about" className="text-white mx-2 hover:underline hover: transition duration-200">About</Link>
         <Link to="/contact" className="text-white mx-2 hover:underline hover: transition duration-200">Contact</Link>
-        <Link to="/login" className="text-white mx-2 hover:text-blue-200 transition duration-200 rounded-full px-4 py-2">Log in</Link>
-        <Link to="/signup" className="bg-yellow-100 text-neutral-800 px-4 py-2 rounded-full hover:transition duration-200">Sign up</Link>
+        <Link to="/login" className="text-white mx-2 hover:bg-blue-400 transition duration-200 rounded-full px-4 py-2">Log in</Link>
+        <Link to="/signup" className="bg-white text-neutral-800 px-4 py-2 rounded-full hover:bg-neutral-200 transition duration-200">Sign up</Link>
       </div>
     </nav>
   );
@@ -56,7 +56,7 @@ const Hero = () => {
   };
 
   return (
-    <div className="relative w-full h-96 overflow-hidden bg-yellow-100">
+    <div className="relative w-full h-96 overflow-hidden bg-white">
       {images.map((image, index) => (
         <img
           key={index}
@@ -94,7 +94,7 @@ const Hero = () => {
 // Donation Component
 const Donation = () => {
   return (
-      <div className="border p-4 rounded-lg text-center overflow-hidden w-96 h-112 bg-yellow-100">
+      <div className="border p-4 rounded-lg text-center overflow-hidden w-96 h-112 bg-white">
         <Link to="/donor/dashboard" className="w-full">
         <img 
           src="/image-1.jpg" 
@@ -111,7 +111,7 @@ const Donation = () => {
 // Recipient Component
 const Recipient = () => {
   return (
-    <div className="border p-4 rounded-lg text-center overflow-hidden w-96 h-112 bg-yellow-100">
+    <div className="border p-4 rounded-lg text-center overflow-hidden w-96 h-112 bg-white">
       <Link to="/recipient/dashboard" className="w-full">
       <img 
         src="/image-2.jpg" 
@@ -128,7 +128,7 @@ const Recipient = () => {
 // Volunteer Component
 const Volunteer = () => {
   return (
-    <div className="border p-4 rounded-lg text-center overflow-hidden w-96 h-112 bg-yellow-100">
+    <div className="border p-4 rounded-lg text-center overflow-hidden w-96 h-112 bg-white">
       <Link to="/volunteer/dashboard" className="w-full">
       <img 
         src="/image-3.jpg" 
@@ -145,7 +145,7 @@ const Volunteer = () => {
 // Overview Component
 const Overview = () => {
   return (
-    <div className="flex flex-col items-center p-6 bg-yellow-100 rounded-lg mt-8 shadow-lg">
+    <div className="flex flex-col items-center p-6 bg-white rounded-lg mt-8 shadow-lg">
       <h2 className="text-4xl font-bold mb-6 text-neutral-950">Overview of ZeroHunger</h2>
       <div className="flex justify-center items-center w-full">
         <img 
@@ -183,7 +183,7 @@ const Overview = () => {
 const HomePage = () => {
   console.log("HomePage rendered"); 
   return (
-    <div className="bg-yellow-100 min-h-screen"> {/* Apply background color to entire page */}
+    <div className="bg-white min-h-screen">
       <Navbar />
       <Hero />
       <div className="flex justify-around p-4">
