@@ -101,7 +101,7 @@ const Donation = () => {
           alt="Donation" 
           className="w-full h-48 object-cover rounded-lg mb-4 transform transition-transform duration-300 hover:scale-105" 
         />
-        <h2 className="text-2xl font-bold">Donate</h2>
+        <h2 className="text-2xl font-bold">Donor</h2>
         <p>Easily donate surplus food from your business, restaurant, or home.</p>
         </Link>
       </div>
