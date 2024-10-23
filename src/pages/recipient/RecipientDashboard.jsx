@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 
-// Mock Data for Recipient Requests
+// Mock Data for Recipient Requests and Available Foods
 const mockRecipientRequests = [
   {
     id: 1,
@@ -26,13 +26,44 @@ const mockRecipientRequests = [
   },
 ];
 
+// Mock Data for Available Foods
+const mockAvailableFoods = [
+  {
+    id: 1,
+    foodType: 'Rice',
+    quantity: '5 kg',
+    location: 'Warehouse A',
+    expiryDate: '2024-12-01',
+    donatorName: 'John Doe',
+    image: '/rice.jpg', // Assuming images are in the public/images folder
+  },
+  {
+    id: 2,
+    foodType: 'Bread',
+    quantity: '20 loaves',
+    location: 'Warehouse B',
+    expiryDate: '2024-10-30',
+    donatorName: 'Jane Smith',
+    image: '/bread.jpg',
+  },
+  {
+    id: 3,
+    foodType: 'Canned Food',
+    quantity: '30 cans',
+    location: 'Warehouse C',
+    expiryDate: '2025-01-15',
+    donatorName: 'Alice Johnson',
+    image: '/canned_food.jpg',
+  },
+];
+
 // Sidebar for Recipient Dashboard
 const RecipientSidebar = () => {
   return (
     <div className="fixed w-64 bg-blue-500 text-white h-screen flex flex-col p-4">
       <nav className="flex flex-col space-y-4">
         <Link to="/recipient/dashboard" className="hover:bg-blue-600 p-2 rounded">Dashboard Overview</Link>
-        <Link to="/recipient/requests" className="hover:bg-blue-600 p-2 rounded">My Requests</Link>
+        <Link to="/recipient/request" className="hover:bg-blue-600 p-2 rounded">Available Food</Link>
         <Link to="/recipient/profile" className="hover:bg-blue-600 p-2 rounded">Profile</Link>
       </nav>
     </div>
@@ -130,60 +161,23 @@ const RecipientDashboard = () => {
             </div>
           </div>
 
+          {/* Available Foods Section */}
           <div>
-            <h2 className="text-3xl font-semibold mb-4">Request New Food Donation</h2>
-            <form onSubmit={handleSubmit} className="bg-gray-50 shadow rounded-lg p-6">
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-2" htmlFor="foodType">
-                  Food Type
-                </label>
-                <input
-                  type="text"
-                  id="foodType"
-                  name="foodType"
-                  value={newRequest.foodType}
-                  onChange={handleInputChange}
-                  className="w-full border rounded p-2"
-                  placeholder="Enter the type of food"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-2" htmlFor="quantity">
-                  Quantity
-                </label>
-                <input
-                  type="text"
-                  id="quantity"
-                  name="quantity"
-                  value={newRequest.quantity}
-                  onChange={handleInputChange}
-                  className="w-full border rounded p-2"
-                  placeholder="Enter the quantity"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-2" htmlFor="date">
-                  Request Date
-                </label>
-                <input
-                  type="date"
-                  id="date"
-                  name="date"
-                  value={newRequest.date}
-                  onChange={handleInputChange}
-                  className="w-full border rounded p-2"
-                  required
-                />
-              </div>
-              <button
-                type="submit"
-                className="bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-600 transition duration-200"
-              >
-                Submit Request
-              </button>
-            </form>
+            <h2 className="text-3xl font-semibold mb-4">Available Foods</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {mockAvailableFoods.map((food) => (
+                <div key={food.id} className="bg-gray-50 shadow rounded-lg overflow-hidden">
+                  <img src={food.image} alt={food.foodType} className="w-full h-40 object-cover" />
+                  <div className="p-4">
+                    <h3 className="text-xl font-semibold">{food.foodType}</h3>
+                    <p className="text-gray-600">Quantity: {food.quantity}</p>
+                    <p className="text-gray-600">Location: {food.location}</p>
+                    <p className="text-gray-600">Expiry Date: {food.expiryDate}</p>
+                    <p className="text-gray-600">Donator: {food.donatorName}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

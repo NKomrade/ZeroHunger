@@ -49,7 +49,7 @@ const recipientProfile = () => {
         <div className="fixed w-64 bg-blue-500 text-white h-screen flex flex-col p-4">
           <nav className="flex flex-col space-y-4">
             <Link to="/recipient/dashboard" className="hover:bg-blue-600 p-2 rounded">Dashboard Overview</Link>
-            <Link to="/recipient/requests" className="hover:bg-blue-600 p-2 rounded">My Requests</Link>
+            <Link to="/recipient/request" className="hover:bg-blue-600 p-2 rounded">Available Food</Link>
             <Link to="/recipient/profile" className="hover:bg-blue-600 p-2 rounded">Profile</Link>
           </nav>
         </div>

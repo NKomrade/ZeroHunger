@@ -13,6 +13,8 @@ import DonationHistory from './pages/donor/DonationHistory';
 import ScheduleDonation from './pages/donor/ScheduleDonation';
 import Profile from './pages/donor/Profile';
 import RecipientProfile from './pages/recipient/RecipientProfile';
+import RequestFood from './pages/recipient/RequestFood';
+
 
 const App = () => {
   return (
@@ -34,6 +36,7 @@ const App = () => {
 
         {/* Recipient Dashboard Route */}
         <Route path="/recipient/dashboard" element={<RecipientDashboard />} />
+        <Route path="/recipient/request" element={<RequestFood />} />
         <Route path="/recipient/profile" element={<RecipientProfile />} />
         
         {/* Volunteer Dashboard Route */}
