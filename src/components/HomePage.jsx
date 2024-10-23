@@ -148,11 +148,11 @@ const Overview = () => {
     <div className="flex flex-col items-center p-6 bg-white rounded-lg mt-8 shadow-lg">
       <h2 className="text-4xl font-bold mb-6 text-neutral-950">Overview of ZeroHunger</h2>
       <div className="flex justify-center items-center w-full">
-        <img 
-          src="/image-4.jpg" 
-          alt="Overview" 
-          className="w-1/2 h-auto rounded-lg object-cover mb-4"
-        />
+      <img 
+        src="/image-4.jpg" 
+        alt="Overview" 
+        className="w-1/2 h-85 rounded-lg mb-4"
+      />
         <div className="w-1/2 p-4">
           <p className="mb-4 text-lg leading-relaxed">
             ZeroHunger is a decentralized initiative aimed at reducing food wastage and feeding those in need. 

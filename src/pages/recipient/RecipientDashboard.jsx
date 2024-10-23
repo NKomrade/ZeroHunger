@@ -29,12 +29,11 @@ const mockRecipientRequests = [
 // Sidebar for Recipient Dashboard
 const RecipientSidebar = () => {
   return (
-    <div className="w-64 bg-blue-500 text-white h-screen flex flex-col p-4">
-      <h2 className="text-2xl font-bold mb-6">Recipient Dashboard</h2>
+    <div className="fixed w-64 bg-blue-500 text-white h-screen flex flex-col p-4">
       <nav className="flex flex-col space-y-4">
         <Link to="/recipient/dashboard" className="hover:bg-blue-600 p-2 rounded">Dashboard Overview</Link>
         <Link to="/recipient/requests" className="hover:bg-blue-600 p-2 rounded">My Requests</Link>
-        <Link to="/profile" className="hover:bg-blue-600 p-2 rounded">Profile</Link>
+        <Link to="/recipient/profile" className="hover:bg-blue-600 p-2 rounded">Profile</Link>
       </nav>
     </div>
   );
@@ -43,15 +42,15 @@ const RecipientSidebar = () => {
 // Navbar Component
 const RecipientNavbar = () => {
   return (
-    <nav className="bg-blue-500 p-4 flex justify-between items-center">
+    <nav className="bg-blue-500 p-4 flex justify-between items-center sticky top-0 z-50">
       <div className="text-white font-bold text-lg">
         <Link to="/">ZeroHunger</Link>
       </div>
       <div>
-        <Link to="/" className="text-white mx-2 hover:underline hover: transition duration-200">Home</Link>
-        <Link to="/donate" className="text-white mx-2 hover:underline hover: transition duration-200">Donate</Link>
-        <Link to="/about" className="text-white mx-2 hover:underline hover: transition duration-200">About</Link>
-        <Link to="/contact" className="text-white mx-2 hover:underline hover: transition duration-200">Contact</Link>
+        <Link to="/" className="text-white mx-2 hover:underline transition duration-200">Home</Link>
+        <Link to="/donate" className="text-white mx-2 hover:underline transition duration-200">Donate</Link>
+        <Link to="/about" className="text-white mx-2 hover:underline transition duration-200">About</Link>
+        <Link to="/contact" className="text-white mx-2 hover:underline transition duration-200">Contact</Link>
         <Link to="/login" className="text-white mx-2 hover:bg-blue-400 transition duration-200 rounded-full px-4 py-2">Log in</Link>
         <Link to="/signup" className="bg-white text-neutral-800 px-4 py-2 rounded-full hover:bg-neutral-200 transition duration-200">Sign up</Link>
       </div>
@@ -93,11 +92,11 @@ const RecipientDashboard = () => {
   };
 
   return (
-    <div>
+    <div className="flex flex-col min-h-screen">
       <RecipientNavbar /> {/* Navbar at the top */}
-      <div className="flex bg-yellow-100">
+      <div className="flex flex-grow">
         <RecipientSidebar /> {/* Sidebar on the left */}
-        <div className="flex-grow p-6">
+        <div className="flex-grow p-6 ml-64"> {/* Add margin-left for sidebar */}
           <h1 className="text-4xl font-bold mb-6 text-blue-500">Recipient Dashboard</h1>
 
           {/* Request History Section */}
