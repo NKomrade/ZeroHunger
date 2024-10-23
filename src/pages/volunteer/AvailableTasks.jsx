@@ -55,8 +55,8 @@ const VolunteerNavbar = () => {
   );
 };
 
-// VolunteerDashboard Component
-const VolunteerDashboard = () => {
+// MyTasks Component
+const AvailableTasks = () => {
   const [tasks] = useState(mockVolunteerTasks);
 
   return (
@@ -65,14 +65,14 @@ const VolunteerDashboard = () => {
       <div className="flex flex-grow">
         <VolunteerSidebar /> {/* Sidebar on the left */}
         <div className="flex-grow p-6 ml-64"> {/* Add margin-left for sidebar */}
-          <h1 className="text-4xl font-bold mb-6 text-blue-500">Volunteer Dashboard Overview</h1>
+          <h1 className="text-4xl font-bold mb-6 text-blue-500">My Volunteer Tasks</h1>
 
           {/* Task Section */}
           <div className="mb-8">
-            <h2 className="text-3xl font-semibold mb-4">Available Tasks</h2>
+            <h2 className="text-3xl font-semibold mb-4">My Tasks</h2>
             <div className="bg-gray-50 shadow rounded-lg p-4">
               {tasks.length === 0 ? (
-                <p>No tasks available yet.</p>
+                <p>No tasks assigned yet.</p>
               ) : (
                 <table className="min-w-full table-auto">
                   <thead>
@@ -101,4 +101,4 @@ const VolunteerDashboard = () => {
   );
 };
 
-export default VolunteerDashboard;
+export default AvailableTasks;

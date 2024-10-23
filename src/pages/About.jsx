@@ -6,7 +6,7 @@ const OurPlatform = () => {
   return (
     <section
       className="h-screen bg-cover bg-center relative"
-      style={{ backgroundImage: "url('/overview.jpg')", backgroundAttachment: 'fixed' }}
+      style={{ backgroundImage: "url('/team.jpg')", backgroundAttachment: 'fixed' }}
     >
       <div className="absolute inset-0 bg-neutral-900 opacity-70"></div>
       <div className="relative z-10 text-center flex flex-col items-center justify-center h-full text-white px-4 md:px-0">
@@ -54,7 +54,7 @@ const OurTeam = () => {
   return (
     <section
       className="h-screen bg-cover bg-center relative"
-      style={{ backgroundImage: "url('/team.jpg')", backgroundAttachment: 'fixed' }}
+      style={{ backgroundImage: "url('/overview.jpg')", backgroundAttachment: 'fixed' }}
     >
       <div className="absolute inset-0 bg-neutral-900 opacity-70"></div>
       <div className="relative z-10 text-center flex flex-col items-center justify-center h-full text-white px-4 md:px-0">

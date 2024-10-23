@@ -7,20 +7,20 @@ import Contact from './pages/Contact';
 import Login from './pages/Login';
 import SignUp from './pages/signup'; 
 import DonorDashboard from './pages/donor/DonorDashboard';
-import RecipientDashboard from './pages/recipient/RecipientDashboard';
-import VolunteerDashboard from './pages/volunteer/VolunteerDashboard';
 import DonationHistory from './pages/donor/DonationHistory'; 
 import ScheduleDonation from './pages/donor/ScheduleDonation';
 import Profile from './pages/donor/Profile';
+import RecipientDashboard from './pages/recipient/RecipientDashboard';
 import RecipientProfile from './pages/recipient/RecipientProfile';
 import RequestFood from './pages/recipient/RequestFood';
-
+import VolunteerDashboard from './pages/volunteer/VolunteerDashboard';
+import AvailableTasks from './pages/volunteer/AvailableTasks';
+import VolunteerProfile from './pages/volunteer/VolunteerProfile';
 
 const App = () => {
   return (
     <Router>
       <Routes>
-        {/* General Pages */}
         <Route path="/" element={<HomePage />} />
         <Route path="/donate" element={<Donate />} />
         <Route path="/about" element={<About />} /> {/* Fixed path case to lowercase */}
@@ -41,6 +41,8 @@ const App = () => {
         
         {/* Volunteer Dashboard Route */}
         <Route path="/volunteer/dashboard" element={<VolunteerDashboard />} />
+        <Route path="/volunteer/tasks" element={<AvailableTasks />} />
+        <Route path="/volunteer/profile" element={<VolunteerProfile />} /> 
       </Routes>
     </Router>
   );
