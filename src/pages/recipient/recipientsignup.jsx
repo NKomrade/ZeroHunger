@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom'; // Import useNavigate for redirection
 
-export default function RecipientSignup() {
+export default function DonorSignup() {
   const navigate = useNavigate(); // Initialize navigate for redirection
 
   const [formData, setFormData] = useState({
@@ -12,7 +12,8 @@ export default function RecipientSignup() {
     password: '',
     venueName: '',
     address: '',
-    fssaiNumber: ''
+    pincode: '',
+    fssaiNumber: '',
   });
 
   const handleChange = (e) => {
@@ -37,7 +38,7 @@ export default function RecipientSignup() {
           Recipient Signup
         </h2>
         <form onSubmit={handleSubmit}>
-          {['name', 'mobile', 'email', 'password', 'venueName', 'address', 'fssaiNumber'].map((field) => (
+          {['name', 'mobile', 'email', 'password', 'venueName', 'address', 'pincode', 'fssaiNumber'].map((field) => (
             <div key={field} className="mb-4">
               <label className="block text-neutral-900 mb-1" htmlFor={field}>
                 {field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1')}
@@ -48,7 +49,7 @@ export default function RecipientSignup() {
                 id={field}
                 value={formData[field]}
                 onChange={handleChange}
-                placeholder={`Enter your ${field}`}
+                placeholder={`Enter your ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`}
                 className="w-full border rounded p-2 placeholder-gray-400"
                 required
               />
