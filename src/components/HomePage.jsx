@@ -201,7 +201,7 @@ const HomePage = () => {
 
       {/* Role Section with ID to scroll into */}
       <section id="role-selection" className="mt-8">
-        <h1 className="text-4xl font-bold text-left p-4">Select your role as:</h1>
+        <h1 className="text-4xl font-bold text-left p-6">Select your role as:</h1>
         <div className="flex justify-around p-4">
           <Donation />
           <Recipient />
