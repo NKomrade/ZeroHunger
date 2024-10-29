@@ -8,11 +8,9 @@ const Navbar = () => {
       <div className="text-white font-bold text-lg"><Link to="/">ZeroHunger</Link></div>
       <div>
         <Link to="/" className="text-white mx-2 hover:underline hover: transition duration-200">Home</Link>
-        <Link to="/donate" className="text-white mx-2 hover:underline hover: transition duration-200">Donate</Link>
         <Link to="/about" className="text-white mx-2 hover:underline hover: transition duration-200">About</Link>
         <Link to="/contact" className="text-white mx-2 hover:underline hover: transition duration-200">Contact</Link>
         <Link to="/login" className="text-white mx-2 hover:bg-blue-400 transition duration-200 rounded-full px-4 py-2">Log in</Link>
-        <Link to="/signup" className="bg-white text-neutral-800 px-4 py-2 rounded-full hover:bg-neutral-200 transition duration-200">Sign up</Link>
       </div>
     </nav>
   );
@@ -20,7 +18,6 @@ const Navbar = () => {
 
 // Hero Component
 const Hero = () => {
-  const navigate = useNavigate();
 
   const images = [
     '/food.jpg',
@@ -52,7 +49,10 @@ const Hero = () => {
   }, [nextImageIndex, currentImageIndex]);
 
   const handleGetInvolved = () => {
-    navigate('/donate');
+    const roleSection = document.getElementById('role-selection');
+    if (roleSection) {
+      roleSection.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   return (
@@ -94,8 +94,8 @@ const Hero = () => {
 // Donation Component
 const Donation = () => {
   return (
-      <div className="border p-4 rounded-lg text-center overflow-hidden w-96 h-112 bg-white">
-        <Link to="/donor/dashboard" className="w-full">
+    <div className="border p-4 rounded-lg text-center overflow-hidden w-96 h-112 bg-white">
+      <Link to="/donor/signup" className="w-full">
         <img 
           src="/image-1.jpg" 
           alt="Donation" 
@@ -103,23 +103,23 @@ const Donation = () => {
         />
         <h2 className="text-2xl font-bold">Donor</h2>
         <p>Easily donate surplus food from your business, restaurant, or home.</p>
-        </Link>
-      </div>
+      </Link>
+    </div>
   );
-};
+}
 
 // Recipient Component
 const Recipient = () => {
   return (
     <div className="border p-4 rounded-lg text-center overflow-hidden w-96 h-112 bg-white">
-      <Link to="/recipient/dashboard" className="w-full">
-      <img 
-        src="/image-2.jpg" 
-        alt="Recipient" 
-        className="w-full h-48 object-cover rounded-lg mb-4 transform transition-transform duration-300 hover:scale-105" 
-      />
-      <h2 className="text-2xl font-bold">Recipient</h2>
-      <p>Request food and receive timely donations for shelters, orphanages, and individuals in need.</p>
+      <Link to="/recipient/signup" className="w-full">
+        <img 
+          src="/image-2.jpg" 
+          alt="Recipient" 
+          className="w-full h-48 object-cover rounded-lg mb-4 transform transition-transform duration-300 hover:scale-105" 
+        />
+        <h2 className="text-2xl font-bold">Recipient</h2>
+        <p>Request food and receive timely donations for shelters, orphanages, and individuals in need.</p>
       </Link>
     </div>
   );
@@ -129,14 +129,14 @@ const Recipient = () => {
 const Volunteer = () => {
   return (
     <div className="border p-4 rounded-lg text-center overflow-hidden w-96 h-112 bg-white">
-      <Link to="/volunteer/dashboard" className="w-full">
-      <img 
-        src="/image-3.jpg" 
-        alt="Volunteer" 
-        className="w-full h-48 object-cover rounded-lg mb-4 transform transition-transform duration-300 hover:scale-105" 
-      />
-      <h2 className="text-2xl font-bold">Volunteer</h2>
-      <p>Join our team of delivery partners and help deliver food to those in need.</p>
+      <Link to="/volunteer/signup" className="w-full">
+        <img 
+          src="/image-3.jpg" 
+          alt="Recipient" 
+          className="w-full h-48 object-cover rounded-lg mb-4 transform transition-transform duration-300 hover:scale-105" 
+        />
+        <h2 className="text-2xl font-bold">Volunteer</h2>
+        <p>Join our team of delivery partners and help deliver food to those in need.</p>
       </Link>
     </div>
   );
@@ -145,32 +145,44 @@ const Volunteer = () => {
 // Overview Component
 const Overview = () => {
   return (
-    <div className="flex flex-col items-center p-6 bg-white rounded-lg mt-8 shadow-lg">
-      <h2 className="text-4xl font-bold mb-6 text-neutral-950">Overview of ZeroHunger</h2>
-      <div className="flex justify-center items-center w-full">
-      <img 
-        src="/image-4.jpg" 
-        alt="Overview" 
-        className="w-1/2 h-85 rounded-lg mb-4"
-      />
-        <div className="w-1/2 p-4">
-          <p className="mb-4 text-lg leading-relaxed">
-            ZeroHunger is a decentralized initiative aimed at reducing food wastage and feeding those in need. 
-            By connecting donors and recipients through a user-friendly platform, we make it easy for businesses, restaurants, 
-            and individuals to donate surplus food. 
+    <div className="flex flex-col items-center text-black rounded-xl shadow-xl p-8 mt-10">
+      {/* Centered Heading */}
+      <h2 className="text-5xl font-extrabold mb-8 tracking-wide text-center drop-shadow-md">
+        Redefining Generosity with <span className="text-blue-500">ZeroHunger</span>
+      </h2>
+
+      {/* Two-column layout */}
+      <div className="flex flex-col lg:flex-row w-full items-center lg:items-start lg:space-x-8">
+        {/* Left side: Image */}
+        <div className="lg:w-1/2 w-full mb-6 lg:mb-0 flex justify-center">
+          <img 
+            src="/logo.jpg" 
+            alt="Overview of ZeroHunger" 
+            className="w-[600px] h-[400px] rounded-xl transition-transform duration-300 hover:scale-105 object-cover"
+          />
+        </div>
+
+        {/* Right side: Text Content */}
+        <div className="lg:w-1/2 w-full">
+          <p className="mb-6 text-xl leading-relaxed tracking-wide">
+            <strong>ZeroHunger</strong> is a decentralized platform revolutionizing the way we reduce food waste 
+            and combat hunger. We bridge the gap between donors and recipients—be it restaurants, businesses, 
+            or individuals—with ease and efficiency.
           </p>
-          <p className="mb-4 text-lg leading-relaxed">
-            Our mission extends beyond just food donation. We work tirelessly to educate the community about the impacts of food waste 
-            and the importance of sharing resources. Recipients, including shelters, orphanages, and individuals in need, can easily 
-            request timely donations, ensuring that no food goes to waste.
+
+          <p className="mb-6 text-lg">
+            Beyond donations, we empower communities through education on sustainable practices and the importance 
+            of minimizing food waste. Shelters, orphanages, and other individuals in need can easily make requests, 
+            ensuring that excess food finds the people who need it the most—on time.
           </p>
-          <p className="mb-4 text-lg leading-relaxed">
-            At ZeroHunger, we believe that everyone deserves access to nutritious food. Join us in our mission to create a sustainable 
-            and compassionate community where food is shared, and hunger is diminished. Together, we can make a difference in the lives 
-            of those who are struggling and promote a culture of giving and sharing.
+
+          <p className="mb-6 text-lg leading-relaxed">
+            Together, we aspire to foster a culture of sharing and giving, ensuring that <em>everyone</em> has access 
+            to nutritious meals. Let’s create a world where food is shared, not wasted.
           </p>
+
           <Link to="/about">
-            <button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-400 transition duration-200 mt-4">
+            <button className="w-full lg:w-auto bg-blue-500 hover:bg-blue-400 text-white text-xl font-bold px-8 py-4 rounded-lg shadow-md transition-all transform hover:scale-105 duration-300">
               Join Us Now
             </button>
           </Link>
@@ -181,17 +193,23 @@ const Overview = () => {
 };
 
 const HomePage = () => {
-  console.log("HomePage rendered"); 
+  console.log("HomePage rendered");
   return (
     <div className="bg-white min-h-screen">
       <Navbar />
       <Hero />
-      <div className="flex justify-around p-4">
-        <Donation />
-        <Recipient />
-        <Volunteer />
-      </div>
-      <Overview /> 
+
+      {/* Role Section with ID to scroll into */}
+      <section id="role-selection" className="mt-8">
+        <h1 className="text-4xl font-bold text-left p-4">Select your role as:</h1>
+        <div className="flex justify-around p-4">
+          <Donation />
+          <Recipient />
+          <Volunteer />
+        </div>
+      </section>
+
+      <Overview />
     </div>
   );
 };

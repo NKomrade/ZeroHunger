@@ -4,8 +4,10 @@ import HomePage from './components/HomePage';
 import Donate from './pages/Donate';
 import About from './pages/About';
 import Contact from './pages/Contact';
-import Login from './pages/Login';
-import SignUp from './pages/signup'; 
+import Login from './pages/Login'; 
+import DonorSignup from './pages/donor/donorsignup'; 
+import VolunteerSignup from './pages/volunteer/volunteersignup'; 
+import RecipientSignup from './pages/recipient/recipientsignup'; 
 import DonorDashboard from './pages/donor/DonorDashboard';
 import DonationHistory from './pages/donor/DonationHistory'; 
 import ScheduleDonation from './pages/donor/ScheduleDonation';
@@ -23,11 +25,13 @@ const App = () => {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/donate" element={<Donate />} />
-        <Route path="/about" element={<About />} /> {/* Fixed path case to lowercase */}
-        <Route path="/contact" element={<Contact />} /> {/* Fixed path case to lowercase */}
+        <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<Contact />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<SignUp />} />
-        
+        <Route path="/donor/signup" element={<DonorSignup />} />
+        <Route path="/volunteer/signup" element={<VolunteerSignup />} />
+        <Route path="/recipient/signup" element={<RecipientSignup />} />
+
         {/* Donor Dashboard Routes */}
         <Route path="/donor/dashboard" element={<DonorDashboard />} />
         <Route path="/donor/history" element={<DonationHistory />} />
@@ -42,7 +46,7 @@ const App = () => {
         {/* Volunteer Dashboard Route */}
         <Route path="/volunteer/dashboard" element={<VolunteerDashboard />} />
         <Route path="/volunteer/tasks" element={<AvailableTasks />} />
-        <Route path="/volunteer/profile" element={<VolunteerProfile />} /> 
+        <Route path="/volunteer/profile" element={<VolunteerProfile />} />
       </Routes>
     </Router>
   );
