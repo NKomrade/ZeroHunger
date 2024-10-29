@@ -1,22 +1,3 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-
-// Navbar Component
-const Navbar = () => {
-  return (
-    <nav className="bg-blue-500 p-4 flex justify-between items-center">
-      <div className="text-white font-bold text-lg"><Link to="/">ZeroHunger</Link></div>
-      <div>
-        <Link to="/" className="text-white mx-2 hover:underline hover: transition duration-200">Home</Link>
-        <Link to="/donate" className="text-white mx-2 hover:underline hover: transition duration-200">Donate</Link>
-        <Link to="/about" className="text-white mx-2 hover:underline hover: transition duration-200">About</Link>
-        <Link to="/contact" className="text-white mx-2 hover:underline hover: transition duration-200">Contact</Link>
-        <Link to="/login" className="text-white mx-2 hover:bg-blue-400 transition duration-200 rounded-full px-4 py-2">Log in</Link>
-        <Link to="/signup" className="bg-white text-neutral-800 px-4 py-2 rounded-full hover:bg-neutral-200 transition duration-200">Sign up</Link>
-      </div>
-    </nav>
-  );
-};
 
 const Donate = () => {
   const [formData, setFormData] = useState({
@@ -47,7 +28,6 @@ const Donate = () => {
 
   return (
     <div className="bg-white min-h-screen">
-      <Navbar />
       <div className="max-w-3xl mx-auto p-6 bg-neutral-50 rounded-lg shadow-lg mt-10">
         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
           <div className="mb-4">
@@ -195,5 +175,3 @@ const Donate = () => {
     </div>
   );
 };
-
-export default Donate;
