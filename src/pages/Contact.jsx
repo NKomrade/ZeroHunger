@@ -23,13 +23,14 @@ const Contact = () => {
     <div className="bg-white min-h-screen"> {/* Full page background color */}
       {/* Navbar Component */}
       <nav className="bg-blue-500 p-4 flex justify-between items-center">
-        <div className="text-white font-bold text-lg"><Link to="/">ZeroHunger</Link></div>
+        <div className="text-white font-bold text-lg">
+          <Link to="/">ZeroHunger</Link>
+        </div>
         <div>
-          <Link to="/" className="text-white mx-2 hover:underline hover: transition duration-200">Home</Link>
-          <Link to="/about" className="text-white mx-2 hover:underline hover: transition duration-200">About</Link>
-          <Link to="/contact" className="text-white mx-2 hover:underline hover: transition duration-200">Contact</Link>
+          <Link to="/" className="text-white mx-2 hover:underline transition duration-200">Home</Link>
+          <Link to="/about" className="text-white mx-2 hover:underline transition duration-200">About</Link>
+          <Link to="/contact" className="text-white mx-2 hover:underline transition duration-200">Contact</Link>
           <Link to="/login" className="text-white mx-2 hover:bg-blue-400 transition duration-200 rounded-full px-4 py-2">Log in</Link>
-          <Link to="/signup" className="bg-white text-neutral-800 px-4 py-2 rounded-full hover:bg-neutral-200 transition duration-200">Sign up</Link>
         </div>
       </nav>
 
