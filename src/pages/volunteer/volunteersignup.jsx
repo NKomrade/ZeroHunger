@@ -10,17 +10,37 @@ export default function VolunteerSignup() {
     mobile: '',
     email: '',
     password: '',
-    address: ''
+    address: '',
   });
+
+  const [pincodes, setPincodes] = useState(['']); // Array to store preferred pincodes
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({ ...prevData, [name]: value }));
   };
 
+  const handlePincodeChange = (index, value) => {
+    const newPincodes = [...pincodes];
+    newPincodes[index] = value;
+    setPincodes(newPincodes);
+  };
+
+  const addPincodeField = () => {
+    setPincodes([...pincodes, '']); // Add a new empty pincode field
+  };
+
+  const removePincodeField = (index) => {
+    if (pincodes.length > 1) {
+      const newPincodes = [...pincodes];
+      newPincodes.splice(index, 1); // Remove the pincode field at the given index
+      setPincodes(newPincodes);
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log('Form Data:', formData);
+    console.log('Form Data:', { ...formData, pincodes });
 
     // Add logic to send data to the backend if required.
 
@@ -52,6 +72,41 @@ export default function VolunteerSignup() {
               />
             </div>
           ))}
+
+          <div className="mb-4">
+            <label className="block text-neutral-900 mb-1">
+              Preferred Pincode(s)
+            </label>
+            {pincodes.map((pincode, index) => (
+              <div key={index} className="flex items-center mb-2">
+                <input
+                  type="text"
+                  value={pincode}
+                  onChange={(e) => handlePincodeChange(index, e.target.value)}
+                  placeholder={`Enter preferred pincode ${index + 1}`}
+                  className="w-full border rounded p-2 mr-2 placeholder-gray-400"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => addPincodeField()}
+                  className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 transition"
+                >
+                  +1
+                </button>
+                {pincodes.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removePincodeField(index)}
+                    className="ml-2 bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition"
+                  >
+                    -
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+
           <button
             type="submit"
             className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition"

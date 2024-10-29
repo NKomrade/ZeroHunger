@@ -9,6 +9,7 @@ const mockUserData = {
   phone: '(239) 816-9029',
   mobile: '(320) 380-4539',
   address: 'Bay Area, San Francisco, CA',
+  pincode: '94101',
   profilePicture: '', 
 };
 
@@ -31,13 +32,14 @@ const VolunteerProfile = () => {
     <div className="flex flex-col min-h-screen">
       {/* Frozen Navbar */}
       <nav className="bg-blue-500 p-4 flex justify-between items-center sticky top-0 z-50">
-        <div className="text-white font-bold text-lg">
-            ZeroHunger
-        </div>
+        <div className="text-white font-bold text-lg">ZeroHunger</div>
         <div>
-            <Link to="/" className=" text-white px-4 py-2 rounded-full hover:text-black hover:bg-neutral-200 transition duration-200">
-              Sign out as Recipient
-            </Link>
+          <Link 
+            to="/" 
+            className="text-white px-4 py-2 rounded-full hover:text-black hover:bg-neutral-200 transition duration-200"
+          >
+            Sign out as Recipient
+          </Link>
         </div>
       </nav>
 
@@ -59,12 +61,11 @@ const VolunteerProfile = () => {
           <div className="bg-white shadow rounded-lg p-6 flex">
             {/* Left Section: Profile Icon and Basic Info */}
             <div className="w-1/3 flex flex-col items-center">
-              {/* Profile Icon (React Icon) */}
               {user.profilePicture ? (
-                <img
-                  src={user.profilePicture}
-                  alt="Profile"
-                  className="w-32 h-32 rounded-full mb-4"
+                <img 
+                  src={user.profilePicture} 
+                  alt="Profile" 
+                  className="w-32 h-32 rounded-full mb-4" 
                 />
               ) : (
                 <FaUserCircle className="text-gray-400 text-6xl mb-4" /> // Placeholder profile icon
@@ -118,7 +119,7 @@ const VolunteerProfile = () => {
                   <input
                     type="text"
                     name="mobile"
-                    value={user.mobile || ''}
+                    value={user.mobile}
                     onChange={handleInputChange}
                     disabled={!isEditing}
                     className={`w-full border ${isEditing ? 'bg-white' : 'bg-gray-100'} rounded p-2`}
@@ -126,16 +127,29 @@ const VolunteerProfile = () => {
                 </div>
               </div>
 
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-2">Address</label>
-                <input
-                  type="text"
-                  name="address"
-                  value={user.address}
-                  onChange={handleInputChange}
-                  disabled={!isEditing}
-                  className={`w-full border ${isEditing ? 'bg-white' : 'bg-gray-100'} rounded p-2`}
-                />
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Address</label>
+                  <input
+                    type="text"
+                    name="address"
+                    value={user.address}
+                    onChange={handleInputChange}
+                    disabled={!isEditing}
+                    className={`w-full border ${isEditing ? 'bg-white' : 'bg-gray-100'} rounded p-2`}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Pincode</label>
+                  <input
+                    type="text"
+                    name="pincode"
+                    value={user.pincode}
+                    onChange={handleInputChange}
+                    disabled={!isEditing}
+                    className={`w-full border ${isEditing ? 'bg-white' : 'bg-gray-100'} rounded p-2`}
+                  />
+                </div>
               </div>
 
               {/* Edit Button */}
