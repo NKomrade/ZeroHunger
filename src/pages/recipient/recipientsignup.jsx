@@ -1,8 +1,26 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate for redirection
+import { useNavigate } from 'react-router-dom';
+import { FaArrowLeft } from 'react-icons/fa';
+import { initializeApp } from 'firebase/app';
+import { getFirestore, collection, addDoc } from 'firebase/firestore';
+
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
+};
+
+// Initialize Firebase app and Firestore
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 export default function DonorSignup() {
-  const navigate = useNavigate(); // Initialize navigate for redirection
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     role: 'Donor',
@@ -10,10 +28,9 @@ export default function DonorSignup() {
     mobile: '',
     email: '',
     password: '',
-    venueName: '',
+    organizationName: '',
     address: '',
     pincode: '',
-    fssaiNumber: '',
   });
 
   const handleChange = (e) => {
@@ -21,43 +38,80 @@ export default function DonorSignup() {
     setFormData((prevData) => ({ ...prevData, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     console.log('Form Data:', formData);
 
-    // Add logic to send data to the backend if required.
+    try {
+      // Save data to the "Recipients" collection in Firestore
+      const docRef = await addDoc(collection(db, 'recipients'), formData);
+      console.log('Document successfully written with ID:', docRef.id);
 
-    // Redirect to Donor Dashboard after successful submission
-    navigate('/recipient/dashboard');
+      // Redirect to Donor Dashboard after successful submission
+      navigate('/recipient/dashboard');
+    } catch (error) {
+      console.error('Error adding document:', error);
+    }
   };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
-        <h2 className="text-xl font-bold mb-4 text-neutral-900 text-center">
+      <div className="bg-white p-8 rounded-lg shadow-lg max-w-lg w-full relative">
+        {/* Back Arrow at Top Left */}
+        <button onClick={() => navigate("/")} className="absolute top-4 left-4 text-gray-600">
+          <FaArrowLeft size={20} />
+        </button>
+
+        <h2 className="text-xl font-bold mb-6 text-neutral-900 text-center">
           Recipient Signup
         </h2>
+
         <form onSubmit={handleSubmit}>
-          {['name', 'mobile', 'email', 'password', 'venueName', 'address', 'pincode', 'fssaiNumber'].map((field) => (
-            <div key={field} className="mb-4">
-              <label className="block text-neutral-900 mb-1" htmlFor={field}>
-                {field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1')}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {['name', 'mobile', 'email', 'password', 'organizationName', 'pincode'].map((field) => (
+              <div key={field} className="mb-4">
+                <label className="block text-neutral-900 mb-1" htmlFor={field}>
+                  {field === 'organizationName'
+                    ? 'Organization Name'
+                    : field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1')}
+                </label>
+                <input
+                  type={field === 'password' ? 'password' : 'text'}
+                  name={field}
+                  id={field}
+                  value={formData[field]}
+                  onChange={handleChange}
+                  placeholder={
+                    field === 'organizationName'
+                      ? 'Enter your organization name'
+                      : `Enter your ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`
+                  }
+                  className="w-full border rounded p-2 placeholder-gray-400"
+                  required
+                />
+              </div>
+            ))}
+
+            {/* Address field spanning across two columns */}
+            <div className="col-span-1 md:col-span-2 mb-4">
+              <label className="block text-neutral-900 mb-1" htmlFor="address">
+                Address
               </label>
               <input
-                type={field === 'password' ? 'password' : 'text'}
-                name={field}
-                id={field}
-                value={formData[field]}
+                type="text"
+                name="address"
+                id="address"
+                value={formData.address}
                 onChange={handleChange}
-                placeholder={`Enter your ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`}
+                placeholder="Enter your address"
                 className="w-full border rounded p-2 placeholder-gray-400"
                 required
               />
             </div>
-          ))}
+          </div>
           <button
             type="submit"
-            className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition"
+            className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition mt-4"
           >
             Sign Up
           </button>
