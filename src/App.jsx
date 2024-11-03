@@ -37,20 +37,20 @@ const App = () => {
     if (!userRole) {
       // Redirect to login if no user role is set
       return <Navigate to="/login" />;
-    } else if (userRole !== allowedRole) {
+    } 
+    // else if (userRole !== allowedRole) {
       // Redirect user to their specific dashboard if the role does not match
-      console.log(`Redirecting to correct dashboard based on role: ${userRole}`);
-      return (
-        <Navigate
-          to={
-            userRole === 'Donor' ? '/donor/dashboard' :
-            userRole === 'Recipient' ? '/recipient/dashboard' :
-            userRole === 'Volunteer' ? '/volunteer/dashboard' : '/login'
-          }
-        />
-      );
-    }
-    // Render the element if the role matches
+      // console.log(`Redirecting to correct dashboard based on role: ${userRole}`);
+      // return (
+      //   <Navigate
+      //     to={
+      //       userRole === 'Donor' ? '/donor/dashboard' :
+      //       userRole === 'Recipient' ? '/recipient/dashboard' :
+      //       userRole === 'Volunteer' ? '/volunteer/dashboard' : '/login'
+      //     }
+      //   />
+      // );
+    // }
     return element;
   };
 
