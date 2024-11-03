@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore';
+import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 // Firebase configuration
@@ -15,9 +16,10 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
-// Initialize Firebase app and Firestore
+// Initialize Firebase app, Firestore, and Auth
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
 
 // Navbar Component
 const Navbar = () => (
@@ -38,7 +40,6 @@ const Login = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     role: '',
-    mobile: '',
     email: '',
     password: '',
   });
@@ -52,48 +53,64 @@ const Login = () => {
   };
 
   const handleRoleSelect = (role) => {
+    console.log(`Role selected: ${role}`);
     setFormData({ ...formData, role });
     setStep(2); // Proceed to next step after selecting role
   };
 
+  const handlePrevious = () => {
+    setFormData({ role: '', email: '', password: '' });
+    setErrorMessage(''); // Clear any error message
+    setStep(1);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setErrorMessage(''); // Reset error message
+    setErrorMessage(''); 
 
-    const { role, mobile, email, password } = formData;
-    let collectionName;
+    const { role, email, password } = formData;
 
-    // Determine the collection based on selected role
-    if (role === 'Donor') {
-      collectionName = 'donors';
-    } else if (role === 'Recipient') {
-      collectionName = 'recipients';
-    } else if (role === 'Volunteer') {
-      collectionName = 'volunteers';
-    }
+    console.log('Attempting to sign in with:', email, password);
+    console.log('User role:', role);
 
     try {
-      // Query Firestore for the user in the appropriate collection
+      // Authenticate user with Firebase Authentication
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      console.log('User successfully logged in:', user.uid);
+
+      // Fetch additional user data from Firestore
+      let collectionName;
+      if (role === 'Donor') {
+        collectionName = 'donors';
+      } else if (role === 'Recipient') {
+        collectionName = 'recipients';
+      } else if (role === 'Volunteer') {
+        collectionName = 'volunteers';
+      }
+      
+      console.log(`Querying Firestore for user in collection: ${collectionName}`);
       const userQuery = query(
         collection(db, collectionName),
-        where('mobile', '==', mobile),
-        where('email', '==', email),
-        where('password', '==', password)  // Check for password match
+        where('uid', '==', user.uid) // Query using UID to ensure data is linked correctly
       );
-      const querySnapshot = await getDocs(userQuery);
 
-      // Check if we have any matching documents
+      const querySnapshot = await getDocs(userQuery);
       if (!querySnapshot.empty) {
-        // Successful login
+        const userData = querySnapshot.docs[0].data();
+        console.log('User data from Firestore:', userData);
+
+        // Redirect to role-specific dashboard
+        console.log(`Redirecting to /${role.toLowerCase()}/dashboard`);
         alert(`Welcome, ${role}!`);
-        navigate(`/${role.toLowerCase()}/dashboard`); // Redirect to role-specific dashboard
+        navigate(`/${role.toLowerCase()}/dashboard`);
       } else {
-        // User not found
-        setErrorMessage('User not found. Please check your credentials and try again.');
+        console.log('User data not found in Firestore for the specified role.');
+        setErrorMessage('User not found.');
       }
     } catch (error) {
-      console.error('Error logging in:', error);
-      setErrorMessage('An error occurred during login. Please try again.');
+      console.error('Error during login:', error);
+      setErrorMessage('Invalid email or password.');
     }
   };
 
@@ -134,20 +151,6 @@ const Login = () => {
               Log in as {formData.role}
             </h2>
             <form onSubmit={handleSubmit}>
-              <div className="mb-4">
-                <label className="block text-neutral-900 mb-1" htmlFor="mobile">Mobile Number</label>
-                <input
-                  type="tel"
-                  name="mobile"
-                  id="mobile"
-                  value={formData.mobile}
-                  onChange={handleChange}
-                  placeholder="Enter your mobile number"
-                  className="w-full border rounded p-2 placeholder-gray-400"
-                  required
-                />
-              </div>
-
               <div className="mb-4">
                 <label className="block text-neutral-900 mb-1" htmlFor="email">Email</label>
                 <input
@@ -190,7 +193,7 @@ const Login = () => {
               <div className="flex justify-end">
                 <button
                   type="button"
-                  onClick={() => setStep(1)}
+                  onClick={handlePrevious}
                   className="mr-2 bg-gray-300 text-black py-2 px-4 rounded hover:bg-gray-200"
                 >
                   Previous

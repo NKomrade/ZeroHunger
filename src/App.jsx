@@ -4,7 +4,7 @@ import HomePage from './components/HomePage';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import Login from './pages/Login';
-import DonorSignup from './pages/donor/donorsignup';
+import DonorSignup from './pages/donor/DonorSignup';
 import VolunteerSignup from './pages/volunteer/volunteersignup';
 import RecipientSignup from './pages/recipient/recipientsignup';
 import DonorDashboard from './pages/donor/DonorDashboard';
@@ -21,30 +21,33 @@ import VolunteerProfile from './pages/volunteer/VolunteerProfile';
 const App = () => {
   const [userRole, setUserRole] = useState(null);
 
-  // Check for stored user role on mount
+  // Retrieve userRole from local storage when the component mounts
   useEffect(() => {
     const storedRole = localStorage.getItem('userRole');
     if (storedRole) setUserRole(storedRole);
   }, []);
 
-  // Save userRole in local storage when it's updated
+  // Update local storage whenever userRole changes
   useEffect(() => {
     if (userRole) localStorage.setItem('userRole', userRole);
   }, [userRole]);
 
-  // Role-based Route Protection
+  // Component to handle protected routes based on user role
   const ProtectedRoute = ({ element, allowedRole }) => {
     if (!userRole) {
       // Redirect to login if no user role is set
       return <Navigate to="/login" />;
     } else if (userRole !== allowedRole) {
-      // Redirect to the appropriate dashboard if the user role does not match the allowed role
+      // Redirect user to their specific dashboard if the role does not match
+      console.log(`Redirecting to correct dashboard based on role: ${userRole}`);
       return (
-        <Navigate to={
-          userRole === 'Donor' ? "/donor/dashboard" :
-          userRole === 'Recipient' ? "/recipient/dashboard" :
-          userRole === 'Volunteer' ? "/volunteer/dashboard" : "/login"
-        } />
+        <Navigate
+          to={
+            userRole === 'Donor' ? '/donor/dashboard' :
+            userRole === 'Recipient' ? '/recipient/dashboard' :
+            userRole === 'Volunteer' ? '/volunteer/dashboard' : '/login'
+          }
+        />
       );
     }
     // Render the element if the role matches

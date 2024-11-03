@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, addDoc } from 'firebase/firestore';
+import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 
 // Firebase configuration
 const firebaseConfig = {
@@ -15,9 +16,10 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
-// Initialize Firebase app and Firestore
+// Initialize Firebase app, Firestore, and Auth
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
 
 export default function RecipientSignup() {
   const navigate = useNavigate();
@@ -42,23 +44,25 @@ export default function RecipientSignup() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Exclude password from Firestore data
-    const { password, ...dataToSave } = {
-      ...formData,
-      role: 'recipient',
-    };
-
-    console.log('Data being sent to Firestore:', dataToSave); // Debugging log
-
     try {
-      // Save data to Firestore in the "recipients" collection
+      // Step 1: Create a new user in Firebase Authentication
+      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+      const user = userCredential.user;
+      console.log('User signed up with UID:', user.uid);
+
+      // Step 2: Save additional user data in Firestore, linked by UID
+      const { password, ...dataToSave } = formData; // Exclude password from Firestore
+      dataToSave.uid = user.uid; // Link Firestore data to Firebase Auth user
+      dataToSave.role = 'Recipient'; // Adding the role as recipient
+
       const docRef = await addDoc(collection(db, 'recipients'), dataToSave);
       console.log('Document successfully written with ID:', docRef.id);
 
-      // Redirect to Recipient Dashboard after successful submission
+      // Redirect to Recipient Dashboard after successful signup
       navigate('/recipient/dashboard');
     } catch (error) {
-      console.error('Error adding document:', error);
+      console.error('Error signing up:', error);
+      alert('An error occurred during signup. Please try again.');
     }
   };
 

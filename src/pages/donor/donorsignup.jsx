@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft } from 'react-icons/fa';
+import { FaArrowLeft, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, addDoc } from 'firebase/firestore';
 import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
@@ -23,6 +23,7 @@ const auth = getAuth(app);
 
 export default function DonorSignup({ setUserRole }) {
   const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
 
   const [formData, setFormData] = useState({
     role: 'Donor',
@@ -45,25 +46,25 @@ export default function DonorSignup({ setUserRole }) {
     e.preventDefault();
 
     try {
-      // Create a user with email and password
+      // Step 1: Create a new user in Firebase Authentication
       const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
-      console.log('User signed up:', userCredential.user.uid);
+      const user = userCredential.user;
+      console.log('User signed up with UID:', user.uid);
 
-      // Prepare data to save, excluding password
-      const { password, ...dataToSave } = formData;
+      // Step 2: Save additional user data in Firestore, linked by UID
+      const { password, ...dataToSave } = formData; // Exclude password from Firestore
+      dataToSave.uid = user.uid; // Link Firestore data to Firebase Auth user
 
-      // Save data to Firestore without the password
       const docRef = await addDoc(collection(db, 'donors'), dataToSave);
       console.log('Document written with ID:', docRef.id);
 
-      // Set user role in local storage and state
+      // Step 3: Set the user role and navigate to the Donor dashboard
       localStorage.setItem('userRole', 'Donor');
       setUserRole('Donor');
 
-      // Redirect to Donor Dashboard after successful submission
       navigate('/donor/dashboard');
     } catch (error) {
-      console.error('Error adding document:', error);
+      console.error('Error during signup:', error);
       alert('An error occurred during signup. Please try again.');
     }
   };
@@ -81,29 +82,133 @@ export default function DonorSignup({ setUserRole }) {
 
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {['name', 'mobile', 'email', 'password', 'organizationName', 'pincode', 'address', 'fssaiNumber'].map((field) => (
-              <div key={field} className="mb-4">
-                <label className="block text-neutral-900 mb-1" htmlFor={field}>
-                  {field === 'organizationName'
-                    ? 'Organization Name'
-                    : field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1')}
-                </label>
-                <input
-                  type={field === 'password' ? 'password' : 'text'}
-                  name={field}
-                  id={field}
-                  value={formData[field]}
-                  onChange={handleChange}
-                  placeholder={
-                    field === 'organizationName'
-                      ? 'Enter your organization name'
-                      : `Enter your ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`
-                  }
-                  className="w-full border rounded p-2 placeholder-gray-400"
-                  required
-                />
-              </div>
-            ))}
+            {/* Name Field */}
+            <div className="mb-4">
+              <label className="block text-neutral-900 mb-1" htmlFor="name">Name</label>
+              <input
+                type="text"
+                name="name"
+                id="name"
+                value={formData.name}
+                onChange={handleChange}
+                placeholder="Enter your name"
+                className="w-full border rounded p-2 placeholder-gray-400"
+                required
+              />
+            </div>
+
+            {/* Mobile Field */}
+            <div className="mb-4">
+              <label className="block text-neutral-900 mb-1" htmlFor="mobile">Mobile</label>
+              <input
+                type="text"
+                name="mobile"
+                id="mobile"
+                value={formData.mobile}
+                onChange={handleChange}
+                placeholder="Enter your mobile number"
+                className="w-full border rounded p-2 placeholder-gray-400"
+                required
+              />
+            </div>
+
+            {/* Email Field */}
+            <div className="mb-4">
+              <label className="block text-neutral-900 mb-1" htmlFor="email">Email</label>
+              <input
+                type="email"
+                name="email"
+                id="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="Enter your email"
+                className="w-full border rounded p-2 placeholder-gray-400"
+                required
+              />
+            </div>
+
+            {/* Password Field with Toggle Icon */}
+            <div className="mb-4 relative">
+              <label className="block text-neutral-900 mb-1" htmlFor="password">Password</label>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                id="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Enter your password"
+                className="w-full border rounded p-2 placeholder-gray-400"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-3 top-10 text-gray-600"
+                aria-label="Toggle password visibility"
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
+
+            {/* Organization Name Field */}
+            <div className="mb-4">
+              <label className="block text-neutral-900 mb-1" htmlFor="organizationName">Organization Name</label>
+              <input
+                type="text"
+                name="organizationName"
+                id="organizationName"
+                value={formData.organizationName}
+                onChange={handleChange}
+                placeholder="Enter your organization name"
+                className="w-full border rounded p-2 placeholder-gray-400"
+                required
+              />
+            </div>
+
+            {/* Pincode Field */}
+            <div className="mb-4">
+              <label className="block text-neutral-900 mb-1" htmlFor="pincode">Pincode</label>
+              <input
+                type="text"
+                name="pincode"
+                id="pincode"
+                value={formData.pincode}
+                onChange={handleChange}
+                placeholder="Enter your pincode"
+                className="w-full border rounded p-2 placeholder-gray-400"
+                required
+              />
+            </div>
+
+            {/* Address Field */}
+            <div className="mb-4">
+              <label className="block text-neutral-900 mb-1" htmlFor="address">Address</label>
+              <input
+                type="text"
+                name="address"
+                id="address"
+                value={formData.address}
+                onChange={handleChange}
+                placeholder="Enter your address"
+                className="w-full border rounded p-2 placeholder-gray-400"
+                required
+              />
+            </div>
+
+            {/* FSSAI Number Field */}
+            <div className="mb-4">
+              <label className="block text-neutral-900 mb-1" htmlFor="fssaiNumber">FSSAI Number</label>
+              <input
+                type="text"
+                name="fssaiNumber"
+                id="fssaiNumber"
+                value={formData.fssaiNumber}
+                onChange={handleChange}
+                placeholder="Enter your FSSAI number"
+                className="w-full border rounded p-2 placeholder-gray-400"
+                required
+              />
+            </div>
           </div>
           <button
             type="submit"
