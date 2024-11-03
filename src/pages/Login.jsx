@@ -1,5 +1,23 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom'; // Ensure you have react-router-dom installed
+import { Link, useNavigate } from 'react-router-dom';
+import { initializeApp } from 'firebase/app';
+import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
+
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
+};
+
+// Initialize Firebase app and Firestore
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 // Navbar Component
 const Navbar = () => (
@@ -16,8 +34,8 @@ const Navbar = () => (
   </nav>
 );
 
-// Signup Component with Role Selection and Simple Inputs
 const Login = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     role: '',
     mobile: '',
@@ -25,6 +43,8 @@ const Login = () => {
     password: '',
   });
   const [step, setStep] = useState(1); // Track the current step
+  const [errorMessage, setErrorMessage] = useState(''); // Track error messages
+  const [showPassword, setShowPassword] = useState(false); // Password visibility toggle
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -36,9 +56,45 @@ const Login = () => {
     setStep(2); // Proceed to next step after selecting role
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
+    setErrorMessage(''); // Reset error message
+
+    const { role, mobile, email, password } = formData;
+    let collectionName;
+
+    // Determine the collection based on selected role
+    if (role === 'Donor') {
+      collectionName = 'donors';
+    } else if (role === 'Recipient') {
+      collectionName = 'recipients';
+    } else if (role === 'Volunteer') {
+      collectionName = 'volunteers';
+    }
+
+    try {
+      // Query Firestore for the user in the appropriate collection
+      const userQuery = query(
+        collection(db, collectionName),
+        where('mobile', '==', mobile),
+        where('email', '==', email),
+        where('password', '==', password)  // Check for password match
+      );
+      const querySnapshot = await getDocs(userQuery);
+
+      // Check if we have any matching documents
+      if (!querySnapshot.empty) {
+        // Successful login
+        alert(`Welcome, ${role}!`);
+        navigate(`/${role.toLowerCase()}/dashboard`); // Redirect to role-specific dashboard
+      } else {
+        // User not found
+        setErrorMessage('User not found. Please check your credentials and try again.');
+      }
+    } catch (error) {
+      console.error('Error logging in:', error);
+      setErrorMessage('An error occurred during login. Please try again.');
+    }
   };
 
   return (
@@ -106,19 +162,30 @@ const Login = () => {
                 />
               </div>
 
-              <div className="mb-4">
+              <div className="mb-4 relative">
                 <label className="block text-neutral-900 mb-1" htmlFor="password">Password</label>
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   name="password"
                   id="password"
                   value={formData.password}
                   onChange={handleChange}
-                  placeholder="Create a password"
+                  placeholder="Enter your password"
                   className="w-full border rounded p-2 placeholder-gray-400"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 py-12 px-5 flex items-center text-gray-600"
+                >
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
               </div>
+
+              {errorMessage && (
+                <p className="text-red-500 font-semibold mb-4">{errorMessage}</p>
+              )}
 
               <div className="flex justify-end">
                 <button

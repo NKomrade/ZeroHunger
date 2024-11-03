@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft } from 'react-icons/fa';
+import { FaArrowLeft, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, addDoc } from 'firebase/firestore';
 
@@ -19,11 +19,10 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-export default function DonorSignup() {
+export default function RecipientSignup() {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    role: 'Donor',
     name: '',
     mobile: '',
     email: '',
@@ -33,6 +32,8 @@ export default function DonorSignup() {
     pincode: '',
   });
 
+  const [showPassword, setShowPassword] = useState(false);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({ ...prevData, [name]: value }));
@@ -40,14 +41,21 @@ export default function DonorSignup() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Form Data:', formData);
+
+    // Exclude password from Firestore data
+    const { password, ...dataToSave } = {
+      ...formData,
+      role: 'recipient',
+    };
+
+    console.log('Data being sent to Firestore:', dataToSave); // Debugging log
 
     try {
-      // Save data to the "Recipients" collection in Firestore
-      const docRef = await addDoc(collection(db, 'recipients'), formData);
+      // Save data to Firestore in the "recipients" collection
+      const docRef = await addDoc(collection(db, 'recipients'), dataToSave);
       console.log('Document successfully written with ID:', docRef.id);
 
-      // Redirect to Donor Dashboard after successful submission
+      // Redirect to Recipient Dashboard after successful submission
       navigate('/recipient/dashboard');
     } catch (error) {
       console.error('Error adding document:', error);
@@ -58,7 +66,7 @@ export default function DonorSignup() {
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <div className="bg-white p-8 rounded-lg shadow-lg max-w-lg w-full relative">
         {/* Back Arrow at Top Left */}
-        <button onClick={() => navigate("/")} className="absolute top-4 left-4 text-gray-600">
+        <button onClick={() => navigate("/")} className="absolute top-10 left-8 text-gray-600">
           <FaArrowLeft size={20} />
         </button>
 
@@ -68,29 +76,80 @@ export default function DonorSignup() {
 
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {['name', 'mobile', 'email', 'password', 'organizationName', 'pincode'].map((field) => (
+            {['name', 'mobile'].map((field) => (
               <div key={field} className="mb-4">
                 <label className="block text-neutral-900 mb-1" htmlFor={field}>
-                  {field === 'organizationName'
-                    ? 'Organization Name'
-                    : field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1')}
+                  {field.charAt(0).toUpperCase() + field.slice(1)}
                 </label>
                 <input
-                  type={field === 'password' ? 'password' : 'text'}
+                  type="text"
                   name={field}
                   id={field}
                   value={formData[field]}
                   onChange={handleChange}
-                  placeholder={
-                    field === 'organizationName'
-                      ? 'Enter your organization name'
-                      : `Enter your ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`
-                  }
+                  placeholder={`Enter your ${field}`}
                   className="w-full border rounded p-2 placeholder-gray-400"
                   required
                 />
               </div>
             ))}
+
+            {/* Email and Password fields in the same row */}
+            <div className="mb-4">
+              <label className="block text-neutral-900 mb-1" htmlFor="email">
+                Email
+              </label>
+              <input
+                type="email"
+                name="email"
+                id="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="Enter your email"
+                className="w-full border rounded p-2 placeholder-gray-400"
+                required
+              />
+            </div>
+
+            <div className="mb-4 relative">
+              <label className="block text-neutral-900 mb-1" htmlFor="password">
+                Password
+              </label>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                id="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Enter your password"
+                className="w-full border rounded p-2 placeholder-gray-400"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 pr-3 pt-7 flex items-center text-gray-600"
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
+
+            {/* Organization Name field */}
+            <div className="col-span-1 md:col-span-2 mb-4">
+              <label className="block text-neutral-900 mb-1" htmlFor="organizationName">
+                Organization Name
+              </label>
+              <input
+                type="text"
+                name="organizationName"
+                id="organizationName"
+                value={formData.organizationName}
+                onChange={handleChange}
+                placeholder="Enter your organization name"
+                className="w-full border rounded p-2 placeholder-gray-400"
+                required
+              />
+            </div>
 
             {/* Address field spanning across two columns */}
             <div className="col-span-1 md:col-span-2 mb-4">
@@ -108,7 +167,25 @@ export default function DonorSignup() {
                 required
               />
             </div>
+
+            {/* Single Pincode field */}
+            <div className="col-span-1 md:col-span-2 mb-4">
+              <label className="block text-neutral-900 mb-1" htmlFor="pincode">
+                Pincode
+              </label>
+              <input
+                type="text"
+                name="pincode"
+                id="pincode"
+                value={formData.pincode}
+                onChange={handleChange}
+                placeholder="Enter your preferred pincode"
+                className="w-full border rounded p-2 placeholder-gray-400"
+                required
+              />
+            </div>
           </div>
+
           <button
             type="submit"
             className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition mt-4"

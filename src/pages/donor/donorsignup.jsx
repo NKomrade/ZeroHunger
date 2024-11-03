@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft } from 'react-icons/fa';
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, addDoc } from 'firebase/firestore';
+import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 
 // Firebase configuration using environment variables
 const firebaseConfig = {
@@ -15,11 +16,12 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
-// Initialize Firebase app and Firestore
+// Initialize Firebase app, Firestore, and Auth
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
 
-export default function DonorSignup() {
+export default function DonorSignup({ setUserRole }) {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -41,25 +43,35 @@ export default function DonorSignup() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Form Data:', formData);
 
     try {
-      // Save data to Firestore
-      const docRef = await addDoc(collection(db, 'donors'), formData);
+      // Create a user with email and password
+      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+      console.log('User signed up:', userCredential.user.uid);
+
+      // Prepare data to save, excluding password
+      const { password, ...dataToSave } = formData;
+
+      // Save data to Firestore without the password
+      const docRef = await addDoc(collection(db, 'donors'), dataToSave);
       console.log('Document written with ID:', docRef.id);
+
+      // Set user role in local storage and state
+      localStorage.setItem('userRole', 'Donor');
+      setUserRole('Donor');
 
       // Redirect to Donor Dashboard after successful submission
       navigate('/donor/dashboard');
     } catch (error) {
       console.error('Error adding document:', error);
+      alert('An error occurred during signup. Please try again.');
     }
   };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <div className="bg-white p-8 rounded-lg shadow-lg max-w-lg w-full relative">
-        {/* Back Arrow at Top Left */}
-        <button onClick={() => navigate("/")} className="absolute top-4 left-4 text-gray-600">
+        <button onClick={() => navigate("/")} className="absolute top-10 left-8 text-gray-600">
           <FaArrowLeft size={20} />
         </button>
 

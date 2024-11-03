@@ -1,14 +1,14 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import HomePage from './components/HomePage';
 import About from './pages/About';
 import Contact from './pages/Contact';
-import Login from './pages/Login'; 
-import DonorSignup from './pages/donor/donorsignup'; 
-import VolunteerSignup from './pages/volunteer/volunteersignup'; 
-import RecipientSignup from './pages/recipient/recipientsignup'; 
+import Login from './pages/Login';
+import DonorSignup from './pages/donor/donorsignup';
+import VolunteerSignup from './pages/volunteer/volunteersignup';
+import RecipientSignup from './pages/recipient/recipientsignup';
 import DonorDashboard from './pages/donor/DonorDashboard';
-import DonationHistory from './pages/donor/DonationHistory'; 
+import DonationHistory from './pages/donor/DonationHistory';
 import ScheduleDonation from './pages/donor/ScheduleDonation';
 import Profile from './pages/donor/Profile';
 import RecipientDashboard from './pages/recipient/RecipientDashboard';
@@ -19,32 +19,64 @@ import AvailableTasks from './pages/volunteer/AvailableTasks';
 import VolunteerProfile from './pages/volunteer/VolunteerProfile';
 
 const App = () => {
+  const [userRole, setUserRole] = useState(null);
+
+  // Check for stored user role on mount
+  useEffect(() => {
+    const storedRole = localStorage.getItem('userRole');
+    if (storedRole) setUserRole(storedRole);
+  }, []);
+
+  // Save userRole in local storage when it's updated
+  useEffect(() => {
+    if (userRole) localStorage.setItem('userRole', userRole);
+  }, [userRole]);
+
+  // Role-based Route Protection
+  const ProtectedRoute = ({ element, allowedRole }) => {
+    if (!userRole) {
+      // Redirect to login if no user role is set
+      return <Navigate to="/login" />;
+    } else if (userRole !== allowedRole) {
+      // Redirect to the appropriate dashboard if the user role does not match the allowed role
+      return (
+        <Navigate to={
+          userRole === 'Donor' ? "/donor/dashboard" :
+          userRole === 'Recipient' ? "/recipient/dashboard" :
+          userRole === 'Volunteer' ? "/volunteer/dashboard" : "/login"
+        } />
+      );
+    }
+    // Render the element if the role matches
+    return element;
+  };
+
   return (
     <Router>
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/donor/signup" element={<DonorSignup />} />
-        <Route path="/volunteer/signup" element={<VolunteerSignup />} />
-        <Route path="/recipient/signup" element={<RecipientSignup />} />
-
-        {/* Donor Dashboard Routes */}
-        <Route path="/donor/dashboard" element={<DonorDashboard />} />
-        <Route path="/donor/history" element={<DonationHistory />} />
-        <Route path="/donor/new-donation" element={<ScheduleDonation />} />
-        <Route path="/donor/profile" element={<Profile />} />
-
-        {/* Recipient Dashboard Route */}
-        <Route path="/recipient/dashboard" element={<RecipientDashboard />} />
-        <Route path="/recipient/request" element={<RequestFood />} />
-        <Route path="/recipient/profile" element={<RecipientProfile />} />
+        <Route path="/login" element={<Login setUserRole={setUserRole} />} />
+        <Route path="/donor/signup" element={<DonorSignup setUserRole={setUserRole} />} />
+        <Route path="/volunteer/signup" element={<VolunteerSignup setUserRole={setUserRole} />} />
+        <Route path="/recipient/signup" element={<RecipientSignup setUserRole={setUserRole} />} />
         
-        {/* Volunteer Dashboard Route */}
-        <Route path="/volunteer/dashboard" element={<VolunteerDashboard />} />
-        <Route path="/volunteer/tasks" element={<AvailableTasks />} />
-        <Route path="/volunteer/profile" element={<VolunteerProfile />} />
+        {/* Donor Routes - Only accessible to donors */}
+        <Route path="/donor/dashboard" element={<ProtectedRoute element={<DonorDashboard />} allowedRole="Donor" />} />
+        <Route path="/donor/history" element={<ProtectedRoute element={<DonationHistory />} allowedRole="Donor" />} />
+        <Route path="/donor/new-donation" element={<ProtectedRoute element={<ScheduleDonation />} allowedRole="Donor" />} />
+        <Route path="/donor/profile" element={<ProtectedRoute element={<Profile />} allowedRole="Donor" />} />
+
+        {/* Recipient Routes - Only accessible to recipients */}
+        <Route path="/recipient/dashboard" element={<ProtectedRoute element={<RecipientDashboard />} allowedRole="Recipient" />} />
+        <Route path="/recipient/request" element={<ProtectedRoute element={<RequestFood />} allowedRole="Recipient" />} />
+        <Route path="/recipient/profile" element={<ProtectedRoute element={<RecipientProfile />} allowedRole="Recipient" />} />
+        
+        {/* Volunteer Routes - Only accessible to volunteers */}
+        <Route path="/volunteer/dashboard" element={<ProtectedRoute element={<VolunteerDashboard />} allowedRole="Volunteer" />} />
+        <Route path="/volunteer/tasks" element={<ProtectedRoute element={<AvailableTasks />} allowedRole="Volunteer" />} />
+        <Route path="/volunteer/profile" element={<ProtectedRoute element={<VolunteerProfile />} allowedRole="Volunteer" />} />
       </Routes>
     </Router>
   );

@@ -78,7 +78,7 @@ export default function VolunteerSignup() {
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <div className="bg-white p-8 rounded-lg shadow-lg max-w-lg w-full relative">
         {/* Back Arrow at Top Left */}
-        <button onClick={() => navigate("/")} className="absolute top-4 left-4 text-gray-600">
+        <button onClick={() => navigate("/")} className="absolute top-10 left-8 text-gray-600">
           <FaArrowLeft size={20} />
         </button>
 
