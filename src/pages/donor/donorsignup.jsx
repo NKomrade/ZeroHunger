@@ -24,6 +24,8 @@ const auth = getAuth(app);
 export default function DonorSignup({ setUserRole }) {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false); // New state to handle loading
+  const [error, setError] = useState(null);
 
   const [formData, setFormData] = useState({
     role: 'Donor',
@@ -44,6 +46,21 @@ export default function DonorSignup({ setUserRole }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError(null); // Reset error before submission
+
+    // Basic validation for mobile and pincode
+    if (!/^[6-9]\d{9}$/.test(formData.mobile)) {
+      setError("Invalid mobile number. Please enter a valid 10-digit number.");
+      setLoading(false);
+      return;
+    }
+
+    if (!/^\d{6}$/.test(formData.pincode)) {
+      setError("Invalid pincode. Please enter a valid 6-digit pincode.");
+      setLoading(false);
+      return;
+    }
 
     try {
       // Step 1: Create a new user in Firebase Authentication
@@ -58,7 +75,11 @@ export default function DonorSignup({ setUserRole }) {
       const docRef = await addDoc(collection(db, 'donors'), dataToSave);
       console.log('Document written with ID:', docRef.id);
 
-      // Step 3: Set the user role and navigate to the Donor dashboard
+      // Step 3: Store UID in localStorage for profile access
+      localStorage.setItem('uid', user.uid); // Store UID to retrieve later in the profile
+      console.log('UID stored in localStorage:', user.uid);
+
+      // Step 4: Set the user role and navigate to the Donor dashboard
       localStorage.setItem('userRole', 'Donor');
       setUserRole('Donor');
 
@@ -66,6 +87,9 @@ export default function DonorSignup({ setUserRole }) {
     } catch (error) {
       console.error('Error during signup:', error);
       alert('An error occurred during signup. Please try again.');
+    }
+    finally {
+      setLoading(false);
     }
   };
 
@@ -213,6 +237,7 @@ export default function DonorSignup({ setUserRole }) {
           <button
             type="submit"
             className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition mt-4"
+            disabled={loading}
           >
             Sign Up
           </button>

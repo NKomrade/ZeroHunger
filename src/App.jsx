@@ -4,7 +4,7 @@ import HomePage from './components/HomePage';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import Login from './pages/Login';
-import DonorSignup from './pages/donor/DonorSignup';
+import DonorSignup from './pages/donor/donorsignup';
 import VolunteerSignup from './pages/volunteer/volunteersignup';
 import RecipientSignup from './pages/recipient/recipientsignup';
 import DonorDashboard from './pages/donor/DonorDashboard';
@@ -38,19 +38,6 @@ const App = () => {
       // Redirect to login if no user role is set
       return <Navigate to="/login" />;
     } 
-    // else if (userRole !== allowedRole) {
-      // Redirect user to their specific dashboard if the role does not match
-      // console.log(`Redirecting to correct dashboard based on role: ${userRole}`);
-      // return (
-      //   <Navigate
-      //     to={
-      //       userRole === 'Donor' ? '/donor/dashboard' :
-      //       userRole === 'Recipient' ? '/recipient/dashboard' :
-      //       userRole === 'Volunteer' ? '/volunteer/dashboard' : '/login'
-      //     }
-      //   />
-      // );
-    // }
     return element;
   };
 
