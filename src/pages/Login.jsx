@@ -53,7 +53,6 @@ const Login = () => {
   };
 
   const handleRoleSelect = (role) => {
-    console.log(`Role selected: ${role}`);
     setFormData({ ...formData, role });
     setStep(2); // Proceed to next step after selecting role
   };
@@ -66,50 +65,26 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setErrorMessage(''); 
-
+    setErrorMessage('');
+  
     const { role, email, password } = formData;
-
-    console.log('Attempting to sign in with:', email, password);
-    console.log('User role:', role);
-
+  
     try {
       // Authenticate user with Firebase Authentication
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      console.log('User successfully logged in:', user.uid);
-
-      // Fetch additional user data from Firestore
-      let collectionName;
-      if (role === 'Donor') {
-        collectionName = 'donors';
-      } else if (role === 'Recipient') {
-        collectionName = 'recipients';
-      } else if (role === 'Volunteer') {
-        collectionName = 'volunteers';
-      }
-      
-      console.log(`Querying Firestore for user in collection: ${collectionName}`);
-      const userQuery = query(
-        collection(db, collectionName),
-        where('uid', '==', user.uid) // Query using UID to ensure data is linked correctly
-      );
-
-      const querySnapshot = await getDocs(userQuery);
-      if (!querySnapshot.empty) {
-        const userData = querySnapshot.docs[0].data();
-        console.log('User data from Firestore:', userData);
-
-        // Redirect to role-specific dashboard
-        console.log(`Redirecting to /${role.toLowerCase()}/dashboard`);
-        alert(`Welcome, ${role}!`);
-        navigate(`/${role.toLowerCase()}/dashboard`);
-      } else {
-        console.log('User data not found in Firestore for the specified role.');
-        setErrorMessage('User not found.');
-      }
+  
+      // Log user details for debugging
+      console.log('User successfully logged in:', user);
+  
+      // Store UID in localStorage and log it
+      localStorage.setItem('donorUID', user.uid);
+      console.log('UID stored in localStorage:', user.uid);
+  
+      // Redirect to the donor dashboard (without passing state directly)
+      alert(`Welcome, ${role}!`);
+      navigate(`/${role.toLowerCase()}/dashboard`);
     } catch (error) {
-      console.error('Error during login:', error);
       setErrorMessage('Invalid email or password.');
     }
   };
