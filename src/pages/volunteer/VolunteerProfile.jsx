@@ -16,7 +16,7 @@ const VolunteerProfile = () => {
     email: user?.email || '',
     mobile: user?.mobile || '',
     address: user?.address || '',
-    pincode: user?.pincodes || [''], // Using pincodes array here
+    pincodes: user?.pincodes || [''], // Use pincodes array here
     role: user?.role || 'Volunteer',
     profilePicture: user?.profilePicture || '',
   });
@@ -24,14 +24,13 @@ const VolunteerProfile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  // Synchronize context data to local state when the user data updates
   useEffect(() => {
     setProfile({
       name: user?.name || '',
       email: user?.email || '',
       mobile: user?.mobile || '',
       address: user?.address || '',
-      pincode: user?.pincode || [''], // Initialize with an array
+      pincodes: user?.pincodes || [''], // Initialize with an array
       role: user?.role || 'Volunteer',
       profilePicture: user?.profilePicture || '',
     });
@@ -88,23 +87,26 @@ const VolunteerProfile = () => {
   };
 
   const handleAddPincode = () => {
-    setProfile((prevProfile) => ({ ...prevProfile, pincode: [...prevProfile.pincode, ''] }));
+    setProfile((prevProfile) => ({ ...prevProfile, pincodes: [...prevProfile.pincodes, ''] }));
   };
 
   const handlePincodeChange = (index, value) => {
-    const updatedPincodes = profile.pincode.map((pin, i) => (i === index ? value : pin));
-    setProfile((prevProfile) => ({ ...prevProfile, pincode: updatedPincodes }));
+    const updatedPincodes = profile.pincodes.map((pin, i) => (i === index ? value : pin));
+    setProfile((prevProfile) => ({ ...prevProfile, pincodes: updatedPincodes }));
   };
 
-  const handleRemovePincode = (index) => {
-    const updatedPincodes = profile.pincode.filter((_, i) => i !== index);
-    setProfile((prevProfile) => ({ ...prevProfile, pincode: updatedPincodes }));
+  const handleRemovePincode = async (index) => {
+    const updatedPincodes = profile.pincodes.filter((_, i) => i !== index);
+    setProfile((prevProfile) => ({ ...prevProfile, pincodes: updatedPincodes }));
 
-    // Update Firestore to save changes immediately
+    // Update Firestore to save changes immediately after removing pincode
     const docRef = doc(db, 'volunteers', user.uid);
-    updateDoc(docRef, { pincodes: updatedPincodes })
-      .then(() => console.log("Pincode removed successfully"))
-      .catch((error) => console.error("Error removing pincode:", error));
+    try {
+      await updateDoc(docRef, { pincodes: updatedPincodes });
+      console.log("Pincode removed successfully");
+    } catch (error) {
+      console.error("Error removing pincode:", error);
+    }
   };
 
   if (loading) return <p>Loading...</p>;
@@ -205,7 +207,7 @@ const VolunteerProfile = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">Pincode(s)</label>
-                  {profile.pincode.map((pin, index) => (
+                  {profile.pincodes.map((pin, index) => (
                     <div key={index} className="flex items-center mb-2">
                       <input
                         type="text"

@@ -12,7 +12,6 @@ const storage = getStorage();
 const DonorProfile = () => {
   const navigate = useNavigate();
 
-  // Hardcoded user data
   const [user, setUser] = useState({
     name: '',
     email: '',
@@ -32,9 +31,9 @@ const DonorProfile = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const user = auth.currentUser;
-        if (user) {
-          const userDocRef = doc(db, 'donors', user.uid);
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+          const userDocRef = doc(db, 'donors', currentUser.uid);
           const userDoc = await getDoc(userDocRef);
           if (userDoc.exists()) {
             setUser(userDoc.data());
@@ -57,16 +56,9 @@ const DonorProfile = () => {
     if (file) {
       const storageRef = ref(storage, `donorphoto/${auth.currentUser.uid}`);
       try {
-        // Upload file to Firebase Storage
         await uploadBytes(storageRef, file);
-
-        // Get the download URL for the uploaded file
         const downloadURL = await getDownloadURL(storageRef);
-
-        // Update local state with new profile picture URL
         setUser((prevUser) => ({ ...prevUser, profilePicture: downloadURL }));
-        
-        // Save profile picture URL to Firestore
         const userDocRef = doc(db, 'donors', auth.currentUser.uid);
         await updateDoc(userDocRef, { profilePicture: downloadURL });
       } catch (error) {
@@ -79,7 +71,6 @@ const DonorProfile = () => {
   const handleDeletePhoto = async () => {
     setUser((prevUser) => ({ ...prevUser, profilePicture: '' }));
 
-    // Update Firestore to remove profile picture
     try {
       const userDocRef = doc(db, 'donors', auth.currentUser.uid);
       await updateDoc(userDocRef, { profilePicture: '' });
@@ -163,7 +154,7 @@ const DonorProfile = () => {
                     type="file"
                     onChange={handleUploadPhoto}
                     accept="image/*"
-                    style={{ display: 'none' }} // Hide the file input
+                    style={{ display: 'none' }}
                   />
                 </label>
                 {user.profilePicture && (
@@ -214,6 +205,21 @@ const DonorProfile = () => {
                   />
                 </div>
                 <div>
+                  <label className="block text-sm font-medium mb-2">FSSAI Number</label>
+                  <input
+                    type="text"
+                    name="fssaiNumber"
+                    value={user.fssaiNumber || ''}
+                    onChange={(e) => setUser({ ...user, fssaiNumber: e.target.value })}
+                    disabled={!isEditing}
+                    className={`w-full border ${isEditing ? 'bg-white' : 'bg-gray-100'} rounded p-2`}
+                  />
+                </div>
+              </div>
+
+              {/* Pincode and Address in a single row */}
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
                   <label className="block text-sm font-medium mb-2">Pincode</label>
                   <input
                     type="text"
@@ -224,7 +230,7 @@ const DonorProfile = () => {
                     className={`w-full border ${isEditing ? 'bg-white' : 'bg-gray-100'} rounded p-2`}
                   />
                 </div>
-                <div className="col-span-2">
+                <div>
                   <label className="block text-sm font-medium mb-2">Address</label>
                   <input
                     type="text"
