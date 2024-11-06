@@ -1,30 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useUserContext } from '../context/usercontext';
 import { FaArrowLeft, FaEye, FaEyeSlash } from 'react-icons/fa';
-import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, addDoc } from 'firebase/firestore';
-import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
-
-// Firebase configuration using environment variables
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
-};
-
-// Initialize Firebase app, Firestore, and Auth
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
 
 export default function DonorSignup({ setUserRole }) {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
-
+  const [loading, setLoading] = useState(false); // Loading state
+  const [error, setError] = useState(null); // Error state
+  const { handleSignup } = useUserContext(); // Access handleSignup from context
   const [formData, setFormData] = useState({
     role: 'Donor',
     name: '',
@@ -44,28 +28,17 @@ export default function DonorSignup({ setUserRole }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError(null);
 
     try {
-      // Step 1: Create a new user in Firebase Authentication
-      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
-      const user = userCredential.user;
-      console.log('User signed up with UID:', user.uid);
-
-      // Step 2: Save additional user data in Firestore, linked by UID
-      const { password, ...dataToSave } = formData; // Exclude password from Firestore
-      dataToSave.uid = user.uid; // Link Firestore data to Firebase Auth user
-
-      const docRef = await addDoc(collection(db, 'donors'), dataToSave);
-      console.log('Document written with ID:', docRef.id);
-
-      // Step 3: Set the user role and navigate to the Donor dashboard
-      localStorage.setItem('userRole', 'Donor');
-      setUserRole('Donor');
-
-      navigate('/donor/dashboard');
+      await handleSignup('Donor', formData, navigate); // Pass navigate as a parameter
+      setUserRole('Donor'); // Set the user role after successful signup
     } catch (error) {
       console.error('Error during signup:', error);
-      alert('An error occurred during signup. Please try again.');
+      setError('An error occurred during signup. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -79,6 +52,8 @@ export default function DonorSignup({ setUserRole }) {
         <h2 className="text-xl font-bold mb-6 text-neutral-900 text-center">
           Donor Signup
         </h2>
+
+        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -214,7 +189,7 @@ export default function DonorSignup({ setUserRole }) {
             type="submit"
             className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition mt-4"
           >
-            Sign Up
+           {loading ? 'Signing Up...' : 'Sign Up'}
           </button>
         </form>
       </div>

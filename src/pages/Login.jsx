@@ -1,25 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore';
-import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
+import { useUserContext } from './context/usercontext';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
-
-// Firebase configuration
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
-};
-
-// Initialize Firebase app, Firestore, and Auth
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
 
 // Navbar Component
 const Navbar = () => (
@@ -36,83 +18,43 @@ const Navbar = () => (
   </nav>
 );
 
+
 const Login = () => {
-  const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    role: '',
-    email: '',
-    password: '',
-  });
-  const [step, setStep] = useState(1); // Track the current step
-  const [errorMessage, setErrorMessage] = useState(''); // Track error messages
-  const [showPassword, setShowPassword] = useState(false); // Password visibility toggle
+  const navigate = useNavigate(); // Initialize navigate here
+  const { handleLogin } = useUserContext();
+  const [formData, setFormData] = useState({ role: '', email: '', password: '' });
+  const [step, setStep] = useState(1);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setFormData((prevData) => ({ ...prevData, [name]: value }));
   };
 
   const handleRoleSelect = (role) => {
-    console.log(`Role selected: ${role}`);
-    setFormData({ ...formData, role });
-    setStep(2); // Proceed to next step after selecting role
+    setFormData((prevData) => ({ ...prevData, role }));
+    setStep(2);
   };
 
   const handlePrevious = () => {
     setFormData({ role: '', email: '', password: '' });
-    setErrorMessage(''); // Clear any error message
+    setErrorMessage('');
     setStep(1);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setErrorMessage(''); 
-
+    setErrorMessage('');
     const { role, email, password } = formData;
 
-    console.log('Attempting to sign in with:', email, password);
-    console.log('User role:', role);
-
     try {
-      // Authenticate user with Firebase Authentication
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      console.log('User successfully logged in:', user.uid);
-
-      // Fetch additional user data from Firestore
-      let collectionName;
-      if (role === 'Donor') {
-        collectionName = 'donors';
-      } else if (role === 'Recipient') {
-        collectionName = 'recipients';
-      } else if (role === 'Volunteer') {
-        collectionName = 'volunteers';
-      }
-      
-      console.log(`Querying Firestore for user in collection: ${collectionName}`);
-      const userQuery = query(
-        collection(db, collectionName),
-        where('uid', '==', user.uid) // Query using UID to ensure data is linked correctly
-      );
-
-      const querySnapshot = await getDocs(userQuery);
-      if (!querySnapshot.empty) {
-        const userData = querySnapshot.docs[0].data();
-        console.log('User data from Firestore:', userData);
-
-        // Redirect to role-specific dashboard
-        console.log(`Redirecting to /${role.toLowerCase()}/dashboard`);
-        alert(`Welcome, ${role}!`);
-        navigate(`/${role.toLowerCase()}/dashboard`);
-      } else {
-        console.log('User data not found in Firestore for the specified role.');
-        setErrorMessage('User not found.');
-      }
+      await handleLogin(role, email, password, navigate); // Pass navigate as a parameter
+      alert(`Welcome, ${role}!`);
     } catch (error) {
-      console.error('Error during login:', error);
-      setErrorMessage('Invalid email or password.');
+      setErrorMessage(error.message);
     }
-  };
+  };  
 
   return (
     <div className="bg-white min-h-screen">

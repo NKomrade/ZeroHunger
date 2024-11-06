@@ -1,78 +1,96 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaUserCircle } from 'react-icons/fa';
-import { initializeApp } from 'firebase/app';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { useUserContext } from '../context/usercontext'; // Import Context to access user data
 
-// Firebase configuration
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
-};
-
-// Initialize Firebase app and Storage
-const app = initializeApp(firebaseConfig);
-const storage = getStorage(app);
+const storage = getStorage();
 
 const RecipientProfile = () => {
-  // Hardcoded recipient data
-  const [user, setUser] = useState({
-    name: 'Swastik Guha',
-    email: 'swastik.com',
-    mobile: '9876543210',
-    pincode: '110004',
-    address: 'Malkaganj, New Delhi',
-    role: 'Recipient', // Added role
-    profilePicture: '', // No initial profile picture
+  const { user, loading, updateUser } = useUserContext(); // Access user, loading, and updateUser from context
+
+  const [profile, setProfile] = useState({
+    name: user?.name || '',
+    email: user?.email || '',
+    mobile: user?.mobile || '',
+    pincode: user?.pincode || '',
+    address: user?.address || '',
+    role: user?.role || 'Recipient',
+    profilePicture: user?.profilePicture || '', // Load initial profile picture if available
   });
-  
+
   const [isEditing, setIsEditing] = useState(false);
   const [uploading, setUploading] = useState(false);
 
+  // Update local state with user data when the user context updates
+  useEffect(() => {
+    setProfile((prevProfile) => ({
+      ...prevProfile,
+      name: user?.name || '',
+      email: user?.email || '',
+      mobile: user?.mobile || '',
+      pincode: user?.pincode || '',
+      address: user?.address || '',
+      role: user?.role || 'Recipient',
+      profilePicture: user?.profilePicture || '',
+    }));
+  }, [user]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setUser((prevUser) => ({ ...prevUser, [name]: value }));
+    setProfile((prevProfile) => ({ ...prevProfile, [name]: value }));
   };
 
   const handleEditClick = () => {
     if (isEditing) {
-      alert('Profile updated successfully!');
+      // Save updated data to Firestore and context
+      updateUser(profile)
+        .then(() => alert('Profile updated successfully!'))
+        .catch((error) => console.error('Error updating profile:', error));
     }
     setIsEditing(!isEditing);
   };
 
   const handleProfilePictureUpload = async (e) => {
     const file = e.target.files[0];
-    if (file) {
+    if (file && user?.uid) {
       setUploading(true);
-      const storageRef = ref(storage, `recipients/randomRecipientId/profilePicture`);
+      const storageRef = ref(storage, `recipientphoto/${user.uid}/profilePicture`);
       try {
         await uploadBytes(storageRef, file);
         const profilePictureURL = await getDownloadURL(storageRef);
-        setUser((prevUser) => ({ ...prevUser, profilePicture: profilePictureURL }));
+  
+        // Use updateUser to save profile picture URL
+        await updateUser({ profilePicture: profilePictureURL });
+        
+        // Update local profile state for immediate UI feedback
+        setProfile((prevProfile) => ({ ...prevProfile, profilePicture: profilePictureURL }));
       } catch (error) {
         console.error('Error uploading profile picture:', error);
       } finally {
         setUploading(false);
       }
     }
-  };
+  };  
 
   const handleDeleteProfilePicture = async () => {
-    const storageRef = ref(storage, `recipients/randomRecipientId/profilePicture`);
-    try {
-      await deleteObject(storageRef);
-      setUser((prevUser) => ({ ...prevUser, profilePicture: '' }));
-      alert('Profile picture deleted successfully!');
-    } catch (error) {
-      console.error('Error deleting profile picture:', error);
+    if (user?.uid) {
+      const storageRef = ref(storage, `recipientphoto/${user.uid}/profilePicture`);
+      try {
+        await deleteObject(storageRef);
+        
+        // Use updateUser to remove profile picture URL
+        await updateUser({ profilePicture: '' });
+        
+        setProfile((prevProfile) => ({ ...prevProfile, profilePicture: '' }));
+        alert('Profile picture deleted successfully!');
+      } catch (error) {
+        console.error('Error deleting profile picture:', error);
+      }
     }
   };
+
+  if (loading) return <p>Loading...</p>;
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -104,13 +122,13 @@ const RecipientProfile = () => {
           <div className="bg-white shadow rounded-lg p-6 flex">
             {/* Profile Icon and Details */}
             <div className="w-1/3 flex flex-col items-center">
-              {user.profilePicture ? (
-                <img src={user.profilePicture} alt="Profile" className="w-32 h-32 rounded-full mb-4" />
+              {profile.profilePicture ? (
+                <img src={profile.profilePicture} alt="Profile" className="w-32 h-32 rounded-full mb-4" />
               ) : (
                 <FaUserCircle className="text-gray-400 text-6xl mb-4" />
               )}
-              <h2 className="text-2xl font-bold mt-4">{user.name}</h2>
-              <p className="text-gray-700 mb-2">{user.role}</p> {/* Display role below the name */}
+              <h2 className="text-2xl font-bold mt-4">{profile.name}</h2>
+              <p className="text-gray-700 mb-2">{profile.role}</p>
 
               {/* Upload and Delete Photo Buttons */}
               <input type="file" accept="image/*" onChange={handleProfilePictureUpload} className="hidden" id="uploadInput" />
@@ -120,7 +138,7 @@ const RecipientProfile = () => {
               >
                 {uploading ? 'Uploading...' : 'Upload Profile Picture'}
               </label>
-              {user.profilePicture && (
+              {profile.profilePicture && (
                 <button
                   onClick={handleDeleteProfilePicture}
                   className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition mt-2"
@@ -138,7 +156,7 @@ const RecipientProfile = () => {
                   <input
                     type="text"
                     name="name"
-                    value={user.name}
+                    value={profile.name}
                     onChange={handleInputChange}
                     disabled={!isEditing}
                     className={`w-full border ${isEditing ? 'bg-white' : 'bg-gray-100'} rounded p-2`}
@@ -149,7 +167,7 @@ const RecipientProfile = () => {
                   <input
                     type="email"
                     name="email"
-                    value={user.email}
+                    value={profile.email}
                     onChange={handleInputChange}
                     disabled={!isEditing}
                     className={`w-full border ${isEditing ? 'bg-white' : 'bg-gray-100'} rounded p-2`}
@@ -160,7 +178,7 @@ const RecipientProfile = () => {
                   <input
                     type="text"
                     name="mobile"
-                    value={user.mobile}
+                    value={profile.mobile}
                     onChange={handleInputChange}
                     disabled={!isEditing}
                     className={`w-full border ${isEditing ? 'bg-white' : 'bg-gray-100'} rounded p-2`}
@@ -171,7 +189,7 @@ const RecipientProfile = () => {
                   <input
                     type="text"
                     name="pincode"
-                    value={user.pincode}
+                    value={profile.pincode}
                     onChange={handleInputChange}
                     disabled={!isEditing}
                     className={`w-full border ${isEditing ? 'bg-white' : 'bg-gray-100'} rounded p-2`}
@@ -184,7 +202,7 @@ const RecipientProfile = () => {
                 <input
                   type="text"
                   name="address"
-                  value={user.address}
+                  value={profile.address}
                   onChange={handleInputChange}
                   disabled={!isEditing}
                   className={`w-full border ${isEditing ? 'bg-white' : 'bg-gray-100'} rounded p-2`}

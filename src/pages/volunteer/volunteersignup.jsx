@@ -1,28 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaEye, FaEyeSlash } from 'react-icons/fa';
-import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, addDoc } from 'firebase/firestore';
-import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
-
-// Firebase configuration
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
-};
-
-// Initialize Firebase app, Firestore, and Auth
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
+import { useUserContext } from '../context/usercontext'; // Import the UserContext
 
 export default function VolunteerSignup() {
   const navigate = useNavigate();
+  const { handleSignup } = useUserContext(); // Get handleSignup from context
   const [showPassword, setShowPassword] = useState(false); // State for password visibility
 
   const [formData, setFormData] = useState({
@@ -63,19 +46,9 @@ export default function VolunteerSignup() {
     e.preventDefault();
 
     try {
-      // Step 1: Create a new user in Firebase Authentication
-      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
-      const user = userCredential.user;
-      console.log('User signed up with UID:', user.uid);
-
-      // Step 2: Save additional user data in Firestore, linked by UID
-      const { password, ...dataToSave } = formData; // Exclude password from Firestore
-      dataToSave.uid = user.uid; // Link Firestore data to Firebase Auth user
-      dataToSave.pincodes = pincodes; // Add the array of preferred pincodes
-
-      const docRef = await addDoc(collection(db, 'volunteers'), dataToSave);
-      console.log('Document successfully written with ID:', docRef.id);
-
+      // Use handleSignup from context to register the volunteer
+      await handleSignup('Volunteer', { ...formData, pincodes });
+      
       // Redirect to Volunteer Dashboard after successful signup
       navigate('/volunteer/dashboard');
     } catch (error) {

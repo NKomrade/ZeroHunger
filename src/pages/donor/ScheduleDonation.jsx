@@ -1,65 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { initializeApp } from 'firebase/app';
-import { getFirestore, doc, getDoc, collection, addDoc } from 'firebase/firestore';
+import { getFirestore, collection, addDoc } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { useUserContext } from '../context/usercontext';
 
-// Firebase configuration
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
-};
-
-// Initialize Firebase app, Firestore, and Storage
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const storage = getStorage(app);
+const db = getFirestore();
+const storage = getStorage();
 
 const ScheduleDonation = () => {
+  const { user, loading } = useUserContext(); // Access user and loading state from context
+  const todayDate = new Date().toISOString().split('T')[0];
   const [newDonation, setNewDonation] = useState({
     foodName: '',
     foodType: '',
     quantity: '',
+    date: todayDate,
     timeFrom: '',
     timeTo: '',
     address: '',
     pincode: '',
-    contactNumber: '',
-    donatorName: '',
-    donatorEmail: '',
+    contactNumber: user?.mobile || '',
+    donatorName: user?.name || '',
+    donatorEmail: user?.email || '',
     instructions: '',
     foodImage: null,
   });
 
   const [successMessage, setSuccessMessage] = useState('');
   const [uploading, setUploading] = useState(false);
-  const donorId = 'your-donor-id';
 
-  useEffect(() => {
-    const fetchDonorInfo = async () => {
-      try {
-        const donorDoc = await getDoc(doc(db, 'donors', donorId));
-        if (donorDoc.exists()) {
-          const donorData = donorDoc.data();
-          setNewDonation((prev) => ({
-            ...prev,
-            donatorName: donorData.name,
-            donatorEmail: donorData.email,
-            contactNumber: donorData.mobile,
-          }));
-        }
-      } catch (error) {
-        console.error('Error fetching donor data:', error);
-      }
-    };
-
-    fetchDonorInfo();
-  }, [donorId]);
+  if (loading) return <p>Loading...</p>;
 
   const handleInputChange = (e) => {
     const { name, value, files } = e.target;
@@ -87,32 +57,35 @@ const ScheduleDonation = () => {
     try {
       // Upload image to Firebase Storage and get URL
       const foodImageUrl = await uploadFoodImage();
-
+  
       // Create the data object to save in Firestore
       const donationData = {
         ...newDonation,
         foodImage: foodImageUrl,
+        donatorId: user.uid, // Use the user's UID for reference
       };
-
-      // Save donation data to Firestore under "donorschedule" collection in "donors" document
-      await addDoc(collection(db, 'donorschedule'), donationData);
-
+  
+      // Save donation data to Firestore under the 'donorschedule' sub-collection in the specific donor's document
+      const donorRef = collection(db, `donors/${user.uid}/donorschedule`);
+      await addDoc(donorRef, donationData);
+  
       // Show success message
       setSuccessMessage('Your donation has been successfully scheduled!');
       alert(`A donation has been scheduled from ${newDonation.timeFrom} to ${newDonation.timeTo}.`);
-
+  
       // Reset the form
       setNewDonation({
         foodName: '',
         foodType: '',
         quantity: '',
+        date: todayDate,
         timeFrom: '',
         timeTo: '',
         address: '',
         pincode: '',
-        contactNumber: newDonation.contactNumber, // Preserved
-        donatorName: newDonation.donatorName, // Preserved
-        donatorEmail: newDonation.donatorEmail, // Preserved
+        contactNumber: user.mobile,
+        donatorName: user.name,
+        donatorEmail: user.email,
         instructions: '',
         foodImage: null,
       });
@@ -151,6 +124,18 @@ const ScheduleDonation = () => {
           <div className="bg-gray-50 shadow rounded-lg p-6">
             <form onSubmit={handleSubmit}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label htmlFor="date" className="block text-sm font-medium mb-2">Date</label>
+                  <input
+                    type="date"
+                    id="date"
+                    name="date"
+                    value={newDonation.date}
+                    onChange={handleInputChange}
+                    className="w-full border rounded p-2"
+                    required
+                  />
+                </div>
                 <div>
                   <label htmlFor="foodName" className="block text-sm font-medium mb-2">Food Name</label>
                   <input

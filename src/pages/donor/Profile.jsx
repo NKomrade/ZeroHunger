@@ -1,51 +1,113 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaUserCircle } from 'react-icons/fa';
+import { getFirestore, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+
+const db = getFirestore();
+const auth = getAuth();
+const storage = getStorage();
 
 const DonorProfile = () => {
   const navigate = useNavigate();
 
   // Hardcoded user data
   const [user, setUser] = useState({
-    name: 'Nitin Kumar Singh',
-    email: 'nitin@gmail.com',
-    mobile: '8851074556',
-    address: 'Shahdara',
-    organizationName: 'MITI',
-    pincode: '110022',
-    fssaiNumber: '225588',
+    name: '',
+    email: '',
+    mobile: '',
+    address: '',
+    organizationName: '',
+    pincode: '',
+    fssaiNumber: '',
     role: 'Donor',
-    profilePicture: '', // Initially no profile picture
+    profilePicture: '',
   });
   
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(null);
 
-  const handleUploadPhoto = (e) => {
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const user = auth.currentUser;
+        if (user) {
+          const userDocRef = doc(db, 'donors', user.uid);
+          const userDoc = await getDoc(userDocRef);
+          if (userDoc.exists()) {
+            setUser(userDoc.data());
+          } else {
+            console.error('No user data found');
+          }
+        } else {
+          navigate('/login');
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+
+    fetchUserData();
+  }, [navigate]);
+
+  const handleUploadPhoto = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setUser({ ...user, profilePicture: reader.result }); // Set the profile picture to the image data
-      };
-      reader.readAsDataURL(file);
+      const storageRef = ref(storage, `donorphoto/${auth.currentUser.uid}`);
+      try {
+        // Upload file to Firebase Storage
+        await uploadBytes(storageRef, file);
+
+        // Get the download URL for the uploaded file
+        const downloadURL = await getDownloadURL(storageRef);
+
+        // Update local state with new profile picture URL
+        setUser((prevUser) => ({ ...prevUser, profilePicture: downloadURL }));
+        
+        // Save profile picture URL to Firestore
+        const userDocRef = doc(db, 'donors', auth.currentUser.uid);
+        await updateDoc(userDocRef, { profilePicture: downloadURL });
+      } catch (error) {
+        console.error('Error saving profile picture:', error);
+        setErrorMessage('Error saving profile picture. Please try again.');
+      }
     }
   };
 
-  const handleDeletePhoto = () => {
-    setUser({ ...user, profilePicture: '' }); // Remove the profile picture
+  const handleDeletePhoto = async () => {
+    setUser((prevUser) => ({ ...prevUser, profilePicture: '' }));
+
+    // Update Firestore to remove profile picture
+    try {
+      const userDocRef = doc(db, 'donors', auth.currentUser.uid);
+      await updateDoc(userDocRef, { profilePicture: '' });
+    } catch (error) {
+      console.error('Error deleting profile picture:', error);
+    }
   };
 
-  const handleSaveClick = () => {
+  const handleSaveClick = async () => {
     setSaving(true);
-    alert('Profile updated successfully!');
-    setIsEditing(false);
-    setSaving(false);
+    try {
+      const userDocRef = doc(db, 'donors', auth.currentUser.uid);
+      await updateDoc(userDocRef, user);
+      alert('Profile updated successfully!');
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      setErrorMessage('Error updating profile. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('donorUID'); // Clear UID on logout
-    navigate('/login');
+    auth.signOut().then(() => {
+      localStorage.removeItem('donorUID');
+      navigate('/login');
+    });
   };
 
   return (
@@ -185,6 +247,7 @@ const DonorProfile = () => {
               >
                 {saving ? 'Saving...' : isEditing ? 'Save' : 'Edit'}
               </button>
+              {errorMessage && <p className="text-red-500 mt-4">{errorMessage}</p>}
             </div>
           </div>
         </div>

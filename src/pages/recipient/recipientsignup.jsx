@@ -1,29 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaEye, FaEyeSlash } from 'react-icons/fa';
-import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, addDoc } from 'firebase/firestore';
-import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
-
-// Firebase configuration
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
-};
-
-// Initialize Firebase app, Firestore, and Auth
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
+import { useUserContext } from '../context/usercontext';
 
 export default function RecipientSignup() {
   const navigate = useNavigate();
-
+  const { handleSignup } = useUserContext();
   const [formData, setFormData] = useState({
     name: '',
     mobile: '',
@@ -45,27 +27,15 @@ export default function RecipientSignup() {
     e.preventDefault();
 
     try {
-      // Step 1: Create a new user in Firebase Authentication
-      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
-      const user = userCredential.user;
-      console.log('User signed up with UID:', user.uid);
-
-      // Step 2: Save additional user data in Firestore, linked by UID
-      const { password, ...dataToSave } = formData; // Exclude password from Firestore
-      dataToSave.uid = user.uid; // Link Firestore data to Firebase Auth user
-      dataToSave.role = 'Recipient'; // Adding the role as recipient
-
-      const docRef = await addDoc(collection(db, 'recipients'), dataToSave);
-      console.log('Document successfully written with ID:', docRef.id);
-
-      // Redirect to Recipient Dashboard after successful signup
-      navigate('/recipient/dashboard');
+      // Use context's handleSignup with 'Recipient' role
+      await handleSignup('Recipient', formData);
+      navigate('/recipient/dashboard'); // Redirect to Recipient Dashboard after successful signup
     } catch (error) {
       console.error('Error signing up:', error);
       alert('An error occurred during signup. Please try again.');
     }
   };
-
+  
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <div className="bg-white p-8 rounded-lg shadow-lg max-w-lg w-full relative">

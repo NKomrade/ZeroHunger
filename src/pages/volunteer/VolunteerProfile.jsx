@@ -1,66 +1,113 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaUserCircle } from 'react-icons/fa';
+import { useUserContext } from '../context/usercontext';
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { doc, updateDoc } from 'firebase/firestore';
+import { getFirestore } from 'firebase/firestore';
 
-const mockUserData = {
-  name: 'Adarsh Sharma',
-  email: 'adarsh@gmail.com',
-  mobile: '8585924202',
-  address: 'Bay Area, San Francisco, CA',
-  pincode: ['110052', '110022'], // Initialize as an array for multiple values
-  role: 'Volunteer',
-  profilePicture: '',
-};
+const storage = getStorage();
+const db = getFirestore();
 
 const VolunteerProfile = () => {
-  const [user, setUser] = useState(mockUserData);
+  const { user, updateUser, loading } = useUserContext();
+  const [profile, setProfile] = useState({
+    name: user?.name || '',
+    email: user?.email || '',
+    mobile: user?.mobile || '',
+    address: user?.address || '',
+    pincode: user?.pincodes || [''], // Using pincodes array here
+    role: user?.role || 'Volunteer',
+    profilePicture: user?.profilePicture || '',
+  });
+
   const [isEditing, setIsEditing] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  // Handle input change for user details
+  // Synchronize context data to local state when the user data updates
+  useEffect(() => {
+    setProfile({
+      name: user?.name || '',
+      email: user?.email || '',
+      mobile: user?.mobile || '',
+      address: user?.address || '',
+      pincode: user?.pincode || [''], // Initialize with an array
+      role: user?.role || 'Volunteer',
+      profilePicture: user?.profilePicture || '',
+    });
+  }, [user]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setUser({ ...user, [name]: value });
+    setProfile((prevProfile) => ({ ...prevProfile, [name]: value }));
   };
 
-  // Toggle editing mode
-  const handleEditClick = () => {
+  const handleEditClick = async () => {
     if (isEditing) {
-      alert('Profile updated successfully!');
+      try {
+        await updateUser(profile); // Update profile in context and Firestore
+        alert('Profile updated successfully!');
+      } catch (error) {
+        console.error('Error updating profile:', error);
+        alert('Failed to update profile. Please try again.');
+      }
     }
     setIsEditing(!isEditing);
   };
 
   const handleProfilePictureUpload = async (e) => {
     const file = e.target.files[0];
-    if (file) {
+    if (file && user?.uid) {
       setUploading(true);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setUser((prevUser) => ({ ...prevUser, profilePicture: reader.result }));
+      const storageRef = ref(storage, `volunteerphoto/${user.uid}/profilePicture`);
+      try {
+        await uploadBytes(storageRef, file);
+        const profilePictureURL = await getDownloadURL(storageRef);
+        setProfile((prevProfile) => ({ ...prevProfile, profilePicture: profilePictureURL }));
+        await updateUser({ ...profile, profilePicture: profilePictureURL });
+      } catch (error) {
+        console.error('Error uploading profile picture:', error);
+      } finally {
         setUploading(false);
-      };
-      reader.readAsDataURL(file);
+      }
     }
   };
 
-  const handleDeleteProfilePicture = () => {
-    setUser((prevUser) => ({ ...prevUser, profilePicture: '' }));
+  const handleDeleteProfilePicture = async () => {
+    if (user?.uid) {
+      const storageRef = ref(storage, `volunteerphoto/${user.uid}/profilePicture`);
+      try {
+        await deleteObject(storageRef);
+        setProfile((prevProfile) => ({ ...prevProfile, profilePicture: '' }));
+        await updateUser({ ...profile, profilePicture: '' });
+        alert('Profile picture deleted successfully!');
+      } catch (error) {
+        console.error('Error deleting profile picture:', error);
+      }
+    }
   };
 
   const handleAddPincode = () => {
-    setUser((prevUser) => ({ ...prevUser, pincode: [...prevUser.pincode, ''] }));
+    setProfile((prevProfile) => ({ ...prevProfile, pincode: [...prevProfile.pincode, ''] }));
   };
 
   const handlePincodeChange = (index, value) => {
-    const updatedPincodes = user.pincode.map((pincode, i) => (i === index ? value : pincode));
-    setUser((prevUser) => ({ ...prevUser, pincode: updatedPincodes }));
+    const updatedPincodes = profile.pincode.map((pin, i) => (i === index ? value : pin));
+    setProfile((prevProfile) => ({ ...prevProfile, pincode: updatedPincodes }));
   };
 
   const handleRemovePincode = (index) => {
-    const updatedPincodes = user.pincode.filter((_, i) => i !== index);
-    setUser((prevUser) => ({ ...prevUser, pincode: updatedPincodes }));
+    const updatedPincodes = profile.pincode.filter((_, i) => i !== index);
+    setProfile((prevProfile) => ({ ...prevProfile, pincode: updatedPincodes }));
+
+    // Update Firestore to save changes immediately
+    const docRef = doc(db, 'volunteers', user.uid);
+    updateDoc(docRef, { pincodes: updatedPincodes })
+      .then(() => console.log("Pincode removed successfully"))
+      .catch((error) => console.error("Error removing pincode:", error));
   };
+
+  if (loading) return <p>Loading...</p>;
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -91,13 +138,13 @@ const VolunteerProfile = () => {
           <div className="bg-white shadow rounded-lg p-6 flex">
             {/* Profile Icon and Basic Info */}
             <div className="w-1/3 flex flex-col items-center">
-              {user.profilePicture ? (
-                <img src={user.profilePicture} alt="Profile" className="w-32 h-32 rounded-full mb-4" />
+              {profile.profilePicture ? (
+                <img src={profile.profilePicture} alt="Profile" className="w-32 h-32 rounded-full mb-4" />
               ) : (
                 <FaUserCircle className="text-gray-400 text-6xl mb-4" />
               )}
-              <h2 className="text-2xl font-bold mt-4">{user.name}</h2>
-              <p className="text-gray-700 mb-2">{user.role}</p> {/* Display role below the name */}
+              <h2 className="text-2xl font-bold mt-4">{profile.name}</h2>
+              <p className="text-gray-700 mb-2">{profile.role}</p>
 
               {/* Upload and Delete Profile Picture Buttons */}
               <input type="file" accept="image/*" onChange={handleProfilePictureUpload} className="hidden" id="uploadInput" />
@@ -107,7 +154,7 @@ const VolunteerProfile = () => {
               >
                 {uploading ? 'Uploading...' : 'Upload Profile Picture'}
               </label>
-              {user.profilePicture && (
+              {profile.profilePicture && (
                 <button
                   onClick={handleDeleteProfilePicture}
                   className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition mt-2"
@@ -125,7 +172,7 @@ const VolunteerProfile = () => {
                   <input
                     type="text"
                     name="name"
-                    value={user.name}
+                    value={profile.name}
                     onChange={handleInputChange}
                     disabled={!isEditing}
                     className={`w-full border ${isEditing ? 'bg-white' : 'bg-gray-100'} rounded p-2`}
@@ -136,7 +183,7 @@ const VolunteerProfile = () => {
                   <input
                     type="email"
                     name="email"
-                    value={user.email}
+                    value={profile.email}
                     onChange={handleInputChange}
                     disabled={!isEditing}
                     className={`w-full border ${isEditing ? 'bg-white' : 'bg-gray-100'} rounded p-2`}
@@ -150,21 +197,7 @@ const VolunteerProfile = () => {
                   <input
                     type="text"
                     name="mobile"
-                    value={user.mobile}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                    className={`w-full border ${isEditing ? 'bg-white' : 'bg-gray-100'} rounded p-2`}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Address</label>
-                  <input
-                    type="text"
-                    name="address"
-                    value={user.address}
+                    value={profile.mobile}
                     onChange={handleInputChange}
                     disabled={!isEditing}
                     className={`w-full border ${isEditing ? 'bg-white' : 'bg-gray-100'} rounded p-2`}
@@ -172,7 +205,7 @@ const VolunteerProfile = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">Pincode(s)</label>
-                  {user.pincode.map((pin, index) => (
+                  {profile.pincode.map((pin, index) => (
                     <div key={index} className="flex items-center mb-2">
                       <input
                         type="text"
@@ -200,6 +233,18 @@ const VolunteerProfile = () => {
                     </button>
                   )}
                 </div>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-2">Address</label>
+                <input
+                  type="text"
+                  name="address"
+                  value={profile.address}
+                  onChange={handleInputChange}
+                  disabled={!isEditing}
+                  className={`w-full border ${isEditing ? 'bg-white' : 'bg-gray-100'} rounded p-2`}
+                />
               </div>
 
               {/* Edit Button */}
