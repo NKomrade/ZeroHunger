@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { getFirestore, collection, addDoc } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useUserContext } from '../context/usercontext';
@@ -28,6 +28,8 @@ const ScheduleDonation = () => {
 
   const [successMessage, setSuccessMessage] = useState('');
   const [uploading, setUploading] = useState(false);
+
+  const navigate = useNavigate();
 
   if (loading) return <p>Loading...</p>;
 
@@ -89,6 +91,8 @@ const ScheduleDonation = () => {
         instructions: '',
         foodImage: null,
       });
+      // Redirect to the dashboard page
+      navigate('/donor/dashboard');
     } catch (error) {
       console.error('Error scheduling donation:', error);
       setSuccessMessage('Failed to schedule donation. Please try again.');
