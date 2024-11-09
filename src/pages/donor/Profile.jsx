@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { FaUserCircle } from 'react-icons/fa';
 import { getFirestore, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
-import { getStorage, ref, getDownloadURL, deleteObject } from 'firebase/storage';
+import { getStorage, ref, getDownloadURL, uploadBytes, deleteObject } from 'firebase/storage';
 
 const db = getFirestore();
 const auth = getAuth();
@@ -73,9 +73,16 @@ const DonorProfile = () => {
     if (file) {
       const storageRef = ref(storage, `donorphoto/${auth.currentUser.uid}`);
       try {
+        // Upload file to Firebase Storage
         await uploadBytes(storageRef, file);
+
+        // Get the download URL for the uploaded file
         const downloadURL = await getDownloadURL(storageRef);
+
+        // Update local state with new profile picture URL
         setUser((prevUser) => ({ ...prevUser, profilePicture: downloadURL }));
+        
+        // Save profile picture URL to Firestore
         const userDocRef = doc(db, 'donors', auth.currentUser.uid);
         await updateDoc(userDocRef, { profilePicture: downloadURL });
       } catch (error) {
@@ -88,6 +95,7 @@ const DonorProfile = () => {
   const handleDeletePhoto = async () => {
     setUser((prevUser) => ({ ...prevUser, profilePicture: '' }));
 
+    // Update Firestore to remove profile picture
     try {
       const userDocRef = doc(db, 'donors', auth.currentUser.uid);
       await updateDoc(userDocRef, { profilePicture: '' });
