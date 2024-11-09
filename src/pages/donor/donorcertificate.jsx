@@ -1,14 +1,17 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { getFirestore, doc, getDoc } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useUserContext } from '../context/usercontext';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 
-const Certificate = () => {
+const storage = getStorage();
+
+const Certificate = ({ autoSave = false }) => {
   const { user } = useUserContext();
   const [donorName, setDonorName] = useState('');
-  const certificateRef = useRef(); // Reference to the certificate div
-  const downloadButtonRef = useRef(); // Reference to the download button
+  const certificateRef = useRef();
+  const downloadButtonRef = useRef();
 
   useEffect(() => {
     const fetchDonorName = async () => {
@@ -19,40 +22,79 @@ const Certificate = () => {
       const docSnap = await getDoc(userDoc);
 
       if (docSnap.exists()) {
-        setDonorName(docSnap.data().name); // Assuming 'name' field in Firestore
+        setDonorName(docSnap.data().name);
       } else {
         console.log("No such document!");
       }
     };
 
     fetchDonorName();
-  }, [user]);
+
+    if (autoSave) {
+      handleSaveAsPdf();
+    }
+  }, [user, autoSave]);
 
   const currentDate = new Date().toLocaleDateString();
 
-  // Function to download the certificate as PDF
   const handleDownload = async () => {
-    // Temporarily hide the download button
+    if (!certificateRef.current) return;
+
     if (downloadButtonRef.current) {
       downloadButtonRef.current.style.display = 'none';
     }
 
-    const certificateElement = certificateRef.current;
-    if (!certificateElement) return;
+    await handleSaveAsPdf();
 
-    // Capture only the certificate content without extra white space
-    const canvas = await html2canvas(certificateElement, { scale: 3, scrollY: -window.scrollY });
-    const imgData = canvas.toDataURL('image/png');
-
-    // Set PDF in landscape format
-    const pdf = new jsPDF('landscape', 'px', [canvas.width / 3, canvas.height / 3]);
-    pdf.addImage(imgData, 'PNG', 0, 0, canvas.width / 3, canvas.height / 3);
-    pdf.save(`Certificate_${donorName}.pdf`);
-
-    // Restore the download button visibility after generating the PDF
     if (downloadButtonRef.current) {
       downloadButtonRef.current.style.display = 'block';
     }
+  };
+
+  const handleSaveAsPdf = async () => {
+    // Capture the certificate as a canvas for the thumbnail
+    const canvas = await html2canvas(certificateRef.current, { scale: 3, scrollY: -window.scrollY });
+    const imgData = canvas.toDataURL('image/jpeg'); // Use JPEG for thumbnail
+
+    // Generate the PDF from the canvas
+    const pdf = new jsPDF('landscape', 'px', [canvas.width / 3, canvas.height / 3]);
+    pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width / 3, canvas.height / 3);
+    const pdfBlob = pdf.output('blob');
+
+    // Save both the PDF and the thumbnail
+    const pdfUrl = await saveFileToStorage(pdfBlob, 'pdf');
+    const thumbnailUrl = await saveFileToStorage(imgData, 'thumbnail');
+
+    // Save both URLs in Firestore
+    await saveCertificateUrlsInFirestore(pdfUrl, thumbnailUrl);
+
+    // Auto-download the PDF
+    pdf.save(`Certificate_${donorName}.pdf`);
+  };
+
+  const saveFileToStorage = async (file, fileType) => {
+    const fileExtension = fileType === 'pdf' ? 'pdf' : 'jpg';
+    const storageRef = ref(storage, `certificates/${user.uid}_${Date.now()}.${fileExtension}`);
+    
+    if (fileType === 'pdf') {
+      await uploadBytes(storageRef, file);
+    } else {
+      const blob = await (await fetch(file)).blob();
+      await uploadBytes(storageRef, blob);
+    }
+    
+    return await getDownloadURL(storageRef);
+  };
+
+  const saveCertificateUrlsInFirestore = async (pdfUrl, thumbnailUrl) => {
+    const db = getFirestore();
+    const userDocRef = doc(db, 'donors', user.uid);
+    const userDocSnap = await getDoc(userDocRef);
+
+    const previousCertificates = userDocSnap.exists() ? userDocSnap.data().certificates || [] : [];
+    await updateDoc(userDocRef, {
+      certificates: [...previousCertificates, { pdfUrl, thumbnailUrl }],
+    });
   };
 
   return (
@@ -80,7 +122,7 @@ const Certificate = () => {
       {/* Download Button */}
       <button
         onClick={handleDownload}
-        ref={downloadButtonRef} // Attach ref to the download button
+        ref={downloadButtonRef}
         className="mt-8 px-4 py-2 bg-blue-500 text-white font-semibold rounded hover:bg-blue-700"
       >
         Download Certificate

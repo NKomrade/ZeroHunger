@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaUserCircle } from 'react-icons/fa';
 import { getFirestore, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { getStorage, ref, getDownloadURL, deleteObject } from 'firebase/storage';
 
 const db = getFirestore();
 const auth = getAuth();
@@ -11,6 +11,8 @@ const storage = getStorage();
 
 const DonorProfile = () => {
   const navigate = useNavigate();
+  const profileRef = useRef(null);
+  const [certificates, setCertificates] = useState([]);
 
   const [user, setUser] = useState({
     name: '',
@@ -22,11 +24,26 @@ const DonorProfile = () => {
     fssaiNumber: '',
     role: 'Donor',
     profilePicture: '',
+    certificates: [],
   });
-  
+
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
+
+  useEffect(() => {
+    const fetchCertificates = async () => {
+      const db = getFirestore();
+      const userDocRef = doc(db, 'donors', user.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      if (userDoc.exists()) {
+        setCertificates(userDoc.data().certificates || []);
+      }
+    };
+
+    fetchCertificates();
+  }, [user]);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -94,6 +111,37 @@ const DonorProfile = () => {
     }
   };
 
+  const handleDeleteCertificate = async (pdfUrl, thumbnailUrl) => {
+    try {
+      // Extract path from URL
+      const getPathFromUrl = (url) => {
+        const baseUrl = 'https://firebasestorage.googleapis.com/v0/b/[your-project-id].appspot.com/o/';
+        return decodeURIComponent(url.replace(baseUrl, '').split('?')[0]);
+      };
+  
+      const pdfPath = getPathFromUrl(pdfUrl);
+      const thumbnailPath = getPathFromUrl(thumbnailUrl);
+  
+      // Delete the PDF and thumbnail from storage
+      const pdfRef = ref(storage, pdfPath);
+      await deleteObject(pdfRef);
+  
+      const thumbnailRef = ref(storage, thumbnailPath);
+      await deleteObject(thumbnailRef);
+  
+      // Update Firestore
+      const userDocRef = doc(db, 'donors', user.uid);
+      const updatedCertificates = certificates.filter(cert => cert.pdfUrl !== pdfUrl);
+      await updateDoc(userDocRef, { certificates: updatedCertificates });
+  
+      // Update local state
+      setCertificates(updatedCertificates);
+      alert('Certificate deleted successfully');
+    } catch (error) {
+      console.error('Error deleting certificate:', error);
+    }
+  };
+
   const handleLogout = () => {
     auth.signOut().then(() => {
       localStorage.removeItem('donorUID');
@@ -131,15 +179,11 @@ const DonorProfile = () => {
         <div className="flex-grow ml-64 p-6">
           <h1 className="text-3xl font-bold mb-6 text-blue-500">Donor Profile</h1>
 
-          <div className="bg-white shadow rounded-lg p-6 flex">
+          <div ref={profileRef} className="bg-white shadow rounded-lg p-6 flex">
             {/* Profile Picture and Basic Info */}
             <div className="w-1/3 flex flex-col items-center">
               {user.profilePicture ? (
-                <img
-                  src={user.profilePicture}
-                  alt="Profile"
-                  className="w-32 h-32 rounded-full mb-4"
-                />
+                <img src={user.profilePicture} alt="Profile" className="w-32 h-32 rounded-full mb-4" />
               ) : (
                 <FaUserCircle className="text-gray-400 text-6xl mb-4" />
               )}
@@ -150,12 +194,7 @@ const DonorProfile = () => {
               <div className="mt-4">
                 <label className="bg-blue-500 text-white px-4 py-2 rounded cursor-pointer hover:bg-blue-600 transition duration-200">
                   Upload Photo
-                  <input
-                    type="file"
-                    onChange={handleUploadPhoto}
-                    accept="image/*"
-                    style={{ display: 'none' }}
-                  />
+                  <input type="file" onChange={handleUploadPhoto} accept="image/*" style={{ display: 'none' }} />
                 </label>
                 {user.profilePicture && (
                   <button
@@ -217,7 +256,6 @@ const DonorProfile = () => {
                 </div>
               </div>
 
-              {/* Pincode and Address in a single row */}
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">Pincode</label>
@@ -256,6 +294,40 @@ const DonorProfile = () => {
               {errorMessage && <p className="text-red-500 mt-4">{errorMessage}</p>}
             </div>
           </div>
+
+          {/* Certificates Section */}
+          {certificates && certificates.length > 0 && (
+            <div className="mt-6">
+              <h2 className="text-xl font-semibold text-blue-500 mb-2">Your Certificates</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {certificates.map((cert, index) => (
+                  <div key={index} className="bg-gray-100 p-4 rounded shadow">
+                    <img 
+                      src={cert.thumbnailUrl} 
+                      alt={`Certificate ${index + 1} Thumbnail`} 
+                      className="w-full rounded mb-2" 
+                    />
+                    <div className="flex justify-between items-center">
+                      <a 
+                        href={cert.pdfUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="text-blue-600 hover:underline"
+                      >
+                        View
+                      </a>
+                      <button
+                        onClick={() => handleDeleteCertificate(cert.pdfUrl, cert.thumbnailUrl)}
+                        className="text-red-500 hover:underline"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

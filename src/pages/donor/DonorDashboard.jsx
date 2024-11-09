@@ -72,7 +72,7 @@ const DonorDashboard = () => {
   // Calculate monthly donation amounts
   const calculateMonthlyData = (donations) => {
     const data = {};
-    let count = 0;
+    let count = donations.length;
 
     donations.forEach((donation) => {
       const date = new Date(donation.date); // Ensure date is parsed correctly
@@ -84,8 +84,6 @@ const DonorDashboard = () => {
       } else {
         data[month] = quantity;
       }
-      // Count donations for progress
-      if (date.getMonth() === new Date().getMonth()) count++;
     });
 
     setMonthlyData(data);
@@ -93,8 +91,7 @@ const DonorDashboard = () => {
 
     if (count > 0 && count % 5 === 0 && count > milestone){
       setCertificateEligible(true);
-      setShowConfetti(true); // Show confetti effect
-      setMilestone(newMilestone);
+      setShowConfetti(true); 
 
       // Hide confetti after a short delay
       setTimeout(() => setShowConfetti(false), 5000);
@@ -189,11 +186,9 @@ const DonorDashboard = () => {
                         <td className="py-2 px-4">{donation.foodType}</td>
                         <td className="py-2 px-4">{donation.quantity}</td>
                         <td className="py-2 px-4">
-                          {donation.status === 'Delivered' || donation.status === 'In Transit' ? (
-                            donation.status
-                          ) : (
-                            'In Transit' // Default status if it doesn't match
-                          )}
+                        {donation.status === 'Delivered' || donation.status === 'In Transit'
+                              ? donation.status
+                              : 'In Transit'}
                         </td>
                       </tr>
                     ))}
