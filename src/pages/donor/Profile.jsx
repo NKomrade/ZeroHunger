@@ -160,7 +160,7 @@ const DonorProfile = () => {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Navbar */}
-      <nav className="bg-blue-500 p-4 flex justify-between items-center sticky top-0 z-50">
+      <nav className="bg-blue-500 p-4 flex justify-between items-center sticky top-0 z-30">
         <div className="text-white font-bold text-lg">ZeroHunger</div>
         <div>
           <button
