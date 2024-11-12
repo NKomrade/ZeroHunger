@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { getFirestore, collection, getDocs, doc, setDoc } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { useUserContext } from '../context/usercontext';
 
 const db = getFirestore();
@@ -117,6 +117,25 @@ const RequestFood = () => {
     navigate('/recipient/dashboard', { state: { acceptedFood: selectedFood } });
   };
 
+  const handleReject = async (foodId) => {
+    // Deletes the selected food from `availablefood` under the current recipient's collection
+    if (user && user.uid) {
+      try {
+        console.log(`Rejecting food with ID: ${foodId} from availablefood collection.`);
+        const recipientFoodRef = doc(db, `recipients/${user.uid}/availablefood`, foodId);
+        await deleteDoc(recipientFoodRef);
+
+        // Remove from local state as well
+        setFoodRequests(prevRequests => prevRequests.filter((request) => request.id !== foodId));
+        console.log(`Food with ID ${foodId} has been removed from availablefood.`);
+      } catch (error) {
+        console.error(`Error removing food with ID ${foodId} from availablefood:`, error);
+      }
+    } else {
+      console.error('User ID not available.');
+    }
+  };
+
   if (loading) return <p>Loading food requests...</p>;
 
   return (
@@ -151,7 +170,7 @@ const RequestFood = () => {
                         Accept
                       </button>
                       <button 
-                        onClick={() => setFoodRequests(foodRequests.filter((r) => r.id !== request.id))} 
+                        onClick={() => handleReject(request.id)} 
                         className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
                         Reject
                       </button>
