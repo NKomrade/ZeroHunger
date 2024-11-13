@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { getFirestore, collection, getDocs, getDoc, doc } from 'firebase/firestore';
+import { Link, useNavigate } from 'react-router-dom';
+import { getFirestore, collection, getDocs, getDoc, doc, setDoc } from 'firebase/firestore';
 import { useUserContext } from '../context/usercontext';
 
 const db = getFirestore();
@@ -9,6 +9,7 @@ const AvailableTasks = () => {
   const { user, loading } = useUserContext();
   const [tasks, setTasks] = useState([]);
   const [loadingTasks, setLoadingTasks] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -18,7 +19,6 @@ const AvailableTasks = () => {
       }
 
       try {
-        // Retrieve volunteer's served pincodes
         console.log("Fetching served pincodes for volunteer:", user.uid);
         const volunteerDocRef = doc(db, 'volunteers', user.uid);
         const volunteerDoc = await getDoc(volunteerDocRef);
@@ -31,9 +31,6 @@ const AvailableTasks = () => {
         }
 
         const volunteerData = volunteerDoc.data();
-        console.log("Volunteer data retrieved:", volunteerData);
-
-        // Check if volunteer has any served pincodes
         const { pincodes } = volunteerData;
         if (!pincodes || pincodes.length === 0) {
           console.log('No pincodes assigned to this volunteer.');
@@ -43,22 +40,13 @@ const AvailableTasks = () => {
         }
 
         const allTasks = [];
-
-        // Fetch all donors and their donations
         const donorSnapshot = await getDocs(collection(db, 'donors'));
         for (const donorDoc of donorSnapshot.docs) {
           const donorId = donorDoc.id;
           const donorData = donorDoc.data();
-
-          console.log(`Checking donor: ${donorData.name}`);
-
-          // Fetch each donor's donations
           const donorScheduleSnapshot = await getDocs(collection(db, `donors/${donorId}/donorschedule`));
           donorScheduleSnapshot.forEach((donationDoc) => {
             const donationData = donationDoc.data();
-            console.log(`Donation found with pincode ${donationData.pincode}`);
-
-            // Compare pincodes
             if (pincodes.includes(donationData.pincode)) {
               allTasks.push({
                 id: donationDoc.id,
@@ -67,11 +55,9 @@ const AvailableTasks = () => {
                 profilePicture: donorData.profilePicture,
                 ...donationData,
               });
-              console.log("Matching pincode found. Task added:", donationData);
             }
           });
         }
-
         setTasks(allTasks);
       } catch (error) {
         console.error('Error fetching tasks:', error);
@@ -81,6 +67,25 @@ const AvailableTasks = () => {
 
     fetchTasks();
   }, [user, loading]);
+
+  const acceptTask = async (task) => {
+    if (!user) return;
+
+    try {
+      const taskRef = doc(db, `volunteers/${user.uid}/task`, task.id);
+      await setDoc(taskRef, {
+        ...task,
+        status: 'Pending',
+        volunteerId: user.uid,
+        acceptedDate: new Date().toISOString(),
+      });
+      console.log("Task saved to Firestore:", task);
+      alert(`Task accepted: ${task.foodName}`);
+      navigate('/volunteer/dashboard');
+    } catch (error) {
+      console.error('Error accepting task:', error);
+    }
+  };
 
   if (loadingTasks) return <p>Loading tasks...</p>;
 
@@ -132,7 +137,7 @@ const AvailableTasks = () => {
                     <div className="flex justify-end mt-4">
                       <button
                         className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-                        onClick={() => alert(`Task assigned: ${task.foodName}`)}
+                        onClick={() => acceptTask(task)}
                       >
                         Accept Task
                       </button>

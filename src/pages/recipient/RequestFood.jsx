@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, doc, setDoc, getDoc } from 'firebase/firestore';
 import { useUserContext } from '../context/usercontext';
 
 const db = getFirestore();
@@ -33,8 +33,6 @@ const RecipientNavbar = () => {
 const RequestFood = () => {
   const [foodRequests, setFoodRequests] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showPopup, setShowPopup] = useState(false);
-  const [selectedFood, setSelectedFood] = useState(null);
   const navigate = useNavigate();
   const { user } = useUserContext();
 
@@ -84,56 +82,34 @@ const RequestFood = () => {
     fetchFoodRequests();
   }, []);
 
-  const handleAccept = (food) => {
-    console.log('Selected food for acceptance:', food);
-    setSelectedFood(food); // Set selected food, but do not save to Firestore yet
-    setShowPopup(true); // Show popup
-  };
-
-  const handlePopupOk = async () => {
-    setShowPopup(false);
-    console.log('Popup OK clicked. Selected food:', selectedFood);
-
-    if (user && user.uid && selectedFood) {
+  const handlePickupOption = async (food, pickupType) => {
+    const pickupStatus = pickupType === 'self' ? 'Self Pickup' : 'Want a Volunteer';
+    
+    if (user && user.uid && food) {
       try {
-        console.log('Saving accepted food to Firestore...');
-        const recipientFoodRef = doc(collection(db, `recipients/${user.uid}/availablefood`));
+        const recipientFoodRef = doc(db, `recipients/${user.uid}/availablefood`, food.id);
         
-        await setDoc(recipientFoodRef, {
-          ...selectedFood,
-          orderDate: new Date().toISOString().split('T')[0], // Add order date
-          status: 'Pending',
-        });
+        const existingDoc = await getDoc(recipientFoodRef);
+        if (!existingDoc.exists()) {
+          // Fetch recipient's profile details from `recipients` collection
+          const recipientDocRef = doc(db, 'recipients', user.uid);
+          const recipientDoc = await getDoc(recipientDocRef);
+          const recipientData = recipientDoc.data();
 
-        console.log('Accepted food saved to Firestore:', selectedFood);
+          await setDoc(recipientFoodRef, {
+            ...food,
+            orderDate: new Date().toISOString().split('T')[0],
+            status: pickupStatus,
+            recipientName: recipientData.name,      // Include recipient name
+            recipientPhone: recipientData.mobile,    // Include recipient phone number
+          });
+        }
       } catch (error) {
-        console.error('Error saving accepted food to Firestore:', error);
+        console.error(`Error saving ${pickupStatus} to Firestore:`, error);
       }
-    } else {
-      console.error('User ID not available or selected food is null.');
     }
 
-    // Navigate to the dashboard and pass selected food in state
-    navigate('/recipient/dashboard', { state: { acceptedFood: selectedFood } });
-  };
-
-  const handleReject = async (foodId) => {
-    // Deletes the selected food from `availablefood` under the current recipient's collection
-    if (user && user.uid) {
-      try {
-        console.log(`Rejecting food with ID: ${foodId} from availablefood collection.`);
-        const recipientFoodRef = doc(db, `recipients/${user.uid}/availablefood`, foodId);
-        await deleteDoc(recipientFoodRef);
-
-        // Remove from local state as well
-        setFoodRequests(prevRequests => prevRequests.filter((request) => request.id !== foodId));
-        console.log(`Food with ID ${foodId} has been removed from availablefood.`);
-      } catch (error) {
-        console.error(`Error removing food with ID ${foodId} from availablefood:`, error);
-      }
-    } else {
-      console.error('User ID not available.');
-    }
+    navigate('/recipient/dashboard');
   };
 
   if (loading) return <p>Loading food requests...</p>;
@@ -165,14 +141,14 @@ const RequestFood = () => {
                     
                     <div className="flex justify-end space-x-2 mt-4">
                       <button 
-                        onClick={() => handleAccept(request)}
-                        className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
-                        Accept
+                        onClick={() => handlePickupOption(request, 'self')}
+                        className="bg-green-500 text-white px-4 py-2 rounded">
+                        Self Pickup
                       </button>
                       <button 
-                        onClick={() => handleReject(request.id)} 
-                        className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
-                        Reject
+                        onClick={() => handlePickupOption(request, 'volunteer')}
+                        className="bg-blue-500 text-white px-4 py-2 rounded">
+                        Want a Volunteer
                       </button>
                     </div>
                   </div>
@@ -182,22 +158,6 @@ const RequestFood = () => {
           </div>
         </div>
       </div>
-
-      {/* Popup for Accept Confirmation */}
-      {showPopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-11/12 md:w-1/3">
-            <h3 className="text-lg font-semibold mb-4">Food Accepted</h3>
-            <p>This food ({selectedFood?.foodName}) has been selected.</p>
-            <button
-              onClick={handlePopupOk}
-              className="mt-6 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-            >
-              OK
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

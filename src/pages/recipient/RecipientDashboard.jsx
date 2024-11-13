@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { getFirestore, doc, deleteDoc } from 'firebase/firestore';
+import { Link } from 'react-router-dom';
+import { getFirestore, collection, getDocs, doc, deleteDoc } from 'firebase/firestore';
+import { useUserContext } from '../context/usercontext';
 
 const db = getFirestore();
 
@@ -30,50 +31,65 @@ const RecipientNavbar = () => {
 };
 
 const RecipientDashboard = () => {
-  const location = useLocation();
-  const acceptedFood = location.state?.acceptedFood || null;
+  const { user } = useUserContext();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Ensure `acceptedFood` is only added once by checking both `id` and `orderDate`
-    if (acceptedFood) {
-      const currentDate = new Date().toISOString().split('T')[0];
-      const uniqueKey = `${acceptedFood.id}-${currentDate}`;
-
-      if (!requests.some(request => request.uniqueKey === uniqueKey)) {
-        const newRequest = {
-          ...acceptedFood,
-          orderDate: currentDate,
-          status: 'Pending',
-          uniqueKey, // Add a truly unique key for each request
-        };
-        setRequests(prevRequests => [...prevRequests, newRequest]);
+    // Fetch data from availablefood collection for the current user
+    const fetchRequests = async () => {
+      if (!user || !user.uid) {
+        console.error('User not authenticated or UID not available');
+        setLoading(false);
+        return;
       }
-    }
-    setLoading(false);
-  }, [acceptedFood, requests]);
 
-  // Toggle the status of a request
+      try {
+        const foodCollectionRef = collection(db, `recipients/${user.uid}/availablefood`);
+        const foodSnapshot = await getDocs(foodCollectionRef);
+
+        const foodRequests = foodSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+
+        setRequests(foodRequests);
+        console.log('Fetched food requests from Firestore:', foodRequests);
+      } catch (error) {
+        console.error('Error fetching food requests from Firestore:', error);
+      }
+
+      setLoading(false);
+    };
+
+    fetchRequests();
+  }, [user]);
+
+  // Toggle the status of a request (Pending <-> Delivered)
   const toggleStatus = (id) => {
     setRequests(prevRequests =>
       prevRequests.map(request =>
         request.id === id
-          ? {
-              ...request,
-              status: request.status === 'Pending' ? 'Delivered' : 'Pending',
-            }
+          ? { ...request, status: request.status === 'Pending' ? 'Delivered' : 'Pending' }
           : request
       )
     );
   };
 
-  // Reject a request and remove it from Firestore
+  // Reject a request and remove it from Firestore and the state
   const handleReject = async (id) => {
+    if (!user || !user.uid) {
+      console.error('User ID is not available.');
+      return;
+    }
+
     try {
-      await deleteDoc(doc(db, `recipients/${location.state?.recipientId}/availablefood`, id));
+      const recipientFoodRef = doc(db, `recipients/${user.uid}/availablefood`, id);
+      await deleteDoc(recipientFoodRef);
+
+      // Remove the rejected request from local state
       setRequests(prevRequests => prevRequests.filter(request => request.id !== id));
-      console.log(`Request with id ${id} has been removed from Firestore.`);
+      console.log(`Request with id ${id} has been removed from Firestore and state.`);
     } catch (error) {
       console.error(`Error removing request: ${error}`);
     }
@@ -110,7 +126,7 @@ const RecipientDashboard = () => {
                   </thead>
                   <tbody>
                     {requests.map(request => (
-                      <tr key={request.uniqueKey} className="border-t">
+                      <tr key={request.id} className="border-t">
                         <td className="py-2 px-4">{request.orderDate}</td>
                         <td className="py-2 px-4">{request.foodName}</td>
                         <td className="py-2 px-4">{request.foodType}</td>
