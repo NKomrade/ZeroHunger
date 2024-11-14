@@ -133,16 +133,7 @@ const RecipientDashboard = () => {
                         <td className="py-2 px-4">{request.quantity}</td>
                         <td className="py-2 px-4">{request.donorName}</td>
                         <td className="py-2 px-4">{request.pincode}</td>
-                        <td className="py-2 px-4">
-                          <button
-                            onClick={() => toggleStatus(request.id)}
-                            className={`px-4 py-2 rounded ${
-                              request.status === 'Pending' ? 'bg-yellow-500' : 'bg-green-500'
-                            } text-white hover:opacity-75`}
-                          >
-                            {request.status}
-                          </button>
-                        </td>
+                        <td className="py-2 px-4">{request.status}</td>
                         <td className="py-2 px-4 space-x-2">
                           <button
                             onClick={() => handleReject(request.id)}

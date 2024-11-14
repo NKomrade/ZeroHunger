@@ -52,8 +52,9 @@ const DonorDashboard = () => {
   const [monthlyDonationCount, setMonthlyDonationCount] = useState(0);
   const [certificateEligible, setCertificateEligible] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
-  const [showCertificateModal, setShowCertificateModal] = useState(false); // State for modal visibility
-  const [milestone, setMilestone] = useState(0);
+  const [showCertificateModal, setShowCertificateModal] = useState(false); 
+  const [notifications, setNotifications] = useState([]);
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -68,6 +69,44 @@ const DonorDashboard = () => {
 
     return () => unsubscribe();
   }, [user]);
+
+  // Fetch notifications from Firestore
+  useEffect(() => {
+    if (!user) return;
+
+    const notificationsRef = collection(db, `donors/${user.uid}/notifications`);
+
+    const unsubscribe = onSnapshot(notificationsRef, (snapshot) => {
+      const newNotifications = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      setNotifications(newNotifications);
+      if (newNotifications.length > 0) {
+        setShowNotificationModal(true); // Show modal if there are new notifications
+      }
+    });
+
+    return () => unsubscribe();
+  }, [user]);
+
+  const handleNotificationClose = () => {
+    setShowNotificationModal(false); // Close notification modal
+
+    // Update donation history with recipient data for corresponding food items
+    const updatedDonationHistory = donationHistory.map((donation) => {
+      const matchingNotification = notifications.find((notif) => notif.foodName === donation.foodName);
+
+      if (matchingNotification) {
+        return {
+          ...donation,
+          recipientName: matchingNotification.recipientName,
+          recipientPhone: matchingNotification.recipientPhone,
+          recipientRole: 'Recipient',
+        };
+      }
+      return donation;
+    });
+
+    setDonationHistory(updatedDonationHistory); // Update donation history with recipient data
+  };
 
   // Calculate monthly donation amounts
   const calculateMonthlyData = (donations) => {
@@ -89,23 +128,12 @@ const DonorDashboard = () => {
     setMonthlyData(data);
     setMonthlyDonationCount(count);
 
-    if (count > 0 && count % 5 === 0 && count > milestone){
+    if (count > 0 && count % 5 === 0){
       setCertificateEligible(true);
       setShowConfetti(true); 
 
       // Hide confetti after a short delay
       setTimeout(() => setShowConfetti(false), 5000);
-    }
-  };
-
-  const toggleStatus = async (donationId, currentStatus) => {
-    const newStatus = currentStatus === 'Delivered' ? 'In Transit' : 'Delivered';
-    const donationDocRef = doc(db, `donors/${user.uid}/donorschedule`, donationId);
-
-    try {
-      await updateDoc(donationDocRef, { status: newStatus });
-    } catch (error) {
-      console.error('Error updating status:', error);
     }
   };
 
@@ -121,15 +149,6 @@ const DonorDashboard = () => {
         borderWidth: 1,
       },
     ],
-  };
-
-  // Function to handle opening and closing the certificate modal
-  const handleViewCertificate = () => {
-    setShowCertificateModal(true); // Show the certificate modal
-  };
-
-  const handleCloseModal = () => {
-    setShowCertificateModal(false); // Hide the certificate modal
   };
 
   return (
@@ -151,19 +170,8 @@ const DonorDashboard = () => {
                   </div>
                 </div>
             </div>
-            {certificateEligible && (
-              <div className="p-4 mb-6 bg-green-100 border border-green-400 text-green-800 rounded-lg">
-                🎉 Congratulations! Your achievement certificate is ready.{' '}
-                <button
-                  onClick={handleViewCertificate} // Show the modal on click
-                  className="underline text-blue-600 hover:text-blue-800 ml-2"
-                >
-                  View it
-                </button>
-              </div>
-            )}
 
-            <div className="max-h-96 overflow-y-auto"> {/* This makes the table container scrollable */}
+            <div className="max-h-96 overflow-y-auto">
               {donationHistory.length === 0 ? (
                 <p>No donations found.</p>
               ) : (
@@ -174,22 +182,23 @@ const DonorDashboard = () => {
                       <th className="border-b py-2 px-4">Food Name</th>
                       <th className="border-b py-2 px-4">Food Type</th>
                       <th className="border-b py-2 px-4">Quantity</th>
-                      <th className="border-b py-2 px-4">Status</th> {/* Renamed column to Status */}
+                      <th className="border-b py-2 px-4">Status</th>
+                      <th className="border-b py-2 px-4">Recipient Name</th>
+                      <th className="border-b py-2 px-4">Recipient Phone</th>
+                      <th className="border-b py-2 px-4">Role</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {/* Reverse the array to show latest entries first and limit to last 5 */}
                     {donationHistory.slice(-5).reverse().map((donation) => (
                       <tr key={donation.id} className="border-t">
                         <td className="py-2 px-4">{donation.date}</td>
                         <td className="py-2 px-4">{donation.foodName}</td>
                         <td className="py-2 px-4">{donation.foodType}</td>
                         <td className="py-2 px-4">{donation.quantity}</td>
-                        <td className="py-2 px-4">
-                        {donation.status === 'Delivered' || donation.status === 'In Transit'
-                              ? donation.status
-                              : 'In Transit'}
-                        </td>
+                        <td className="py-2 px-4">{donation.status || 'In Transit'}</td>
+                        <td className="py-2 px-4">{donation.recipientName || ''}</td>
+                        <td className="py-2 px-4">{donation.recipientPhone || ''}</td>
+                        <td className="py-2 px-4">{donation.recipientRole || ''}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -197,6 +206,7 @@ const DonorDashboard = () => {
               )}
             </div>
           </div>
+
           <div className="bg-gray-50 shadow rounded-lg p-4 mt-6">
             <h2 className="text-2xl font-bold mb-4 text-blue-500">Monthly Donation Summary</h2>
             <Bar data={chartData} options={{ responsive: true, plugins: { legend: { position: 'top' }}}} />
@@ -204,17 +214,29 @@ const DonorDashboard = () => {
         </div>
       </div>
 
-      {/* Modal for displaying the certificate */}
-      {showCertificateModal && (
+      {/* Redesigned Notification Modal */}
+      {showNotificationModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-lg p-6 w-11/12 md:w-3/4 lg:w-1/2">
-            <button
-              onClick={handleCloseModal}
-              className="text-white hover:text-gray-800 absolute top-4 right-4"
-            >
+            <h2 className="text-2xl font-bold mb-4">New Pickup Notifications</h2>
+            <div className="space-y-4">
+              {notifications.map((notification) => (
+                <div key={notification.id} className="p-4 border rounded-lg shadow-sm">
+                  <p><strong>Name:</strong> {notification.recipientName}</p>
+                  <p><strong>Email:</strong> {notification.recipientEmail}</p>
+                  <p><strong>Phone:</strong> {notification.recipientPhone}</p>
+                  {notification.recipientProfilePicture && (
+                    <img src={notification.recipientProfilePicture} alt="Profile" className="w-16 h-16 rounded-full mt-2" />
+                  )}
+                  <p><strong>Food Name:</strong> {notification.foodName}</p>
+                  <p><strong>Status:</strong> {notification.pickupStatus}</p>
+                  <p><strong>Comment:</strong> {notification.comment}</p>
+                </div>
+              ))}
+            </div>
+            <button onClick={handleNotificationClose} className="bg-blue-500 text-white px-4 py-2 rounded mt-4">
               Close
             </button>
-            <Certificate donorName={user.displayName} />
           </div>
         </div>
       )}

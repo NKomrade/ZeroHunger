@@ -34,7 +34,7 @@ const RequestFood = () => {
   const [foodRequests, setFoodRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const { user } = useUserContext();
+  const { user } = useUserContext(); // Access recipient's context
 
   useEffect(() => {
     const fetchFoodRequests = async () => {
@@ -50,7 +50,7 @@ const RequestFood = () => {
         for (const donorDoc of donorSnapshot.docs) {
           const donorId = donorDoc.id;
           const donorData = donorDoc.data();
-          const profilePicture = donorData.profilePicture;
+          const { name, address, email, mobile, profilePicture } = donorData; // Extract donor details
 
           const donorscheduleSnapshot = await getDocs(collection(db, `donors/${donorId}/donorschedule`));
           donorscheduleSnapshot.forEach((donationDoc) => {
@@ -58,9 +58,11 @@ const RequestFood = () => {
             requests.push({
               id: donationDoc.id,
               donorId: donorId,
-              donorName: donorData.name,
-              donorEmail: donorData.email,
-              profilePicture: profilePicture,
+              donorName: name,
+              donorEmail: email,
+              donorMobile: mobile,
+              donorAddress: address,
+              donorProfilePicture: profilePicture,
               foodName: donationData.foodName,
               foodType: donationData.foodType,
               quantity: donationData.quantity,
@@ -84,34 +86,70 @@ const RequestFood = () => {
 
   const handlePickupOption = async (food, pickupType) => {
     const pickupStatus = pickupType === 'self' ? 'Self Pickup' : 'Want a Volunteer';
-    
+
     if (user && user.uid && food) {
       try {
+        console.log("Initiating Self Pickup process...");
+
         const recipientFoodRef = doc(db, `recipients/${user.uid}/availablefood`, food.id);
-        
         const existingDoc = await getDoc(recipientFoodRef);
+
         if (!existingDoc.exists()) {
-          // Fetch recipient's profile details from `recipients` collection
+          console.log("Adding a new document to recipient's availablefood collection.");
+
           const recipientDocRef = doc(db, 'recipients', user.uid);
           const recipientDoc = await getDoc(recipientDocRef);
+
+          if (!recipientDoc.exists()) {
+            console.log("Recipient profile data not found in Firestore.");
+            return;
+          }
+
           const recipientData = recipientDoc.data();
+          console.log("Fetched recipient data:", recipientData);
 
           await setDoc(recipientFoodRef, {
             ...food,
             orderDate: new Date().toISOString().split('T')[0],
             status: pickupStatus,
-            recipientName: recipientData.name,      // Include recipient name
-            recipientPhone: recipientData.mobile,    // Include recipient phone number
+            recipientName: recipientData.name,
+            recipientPhone: recipientData.mobile,
+            recipientEmail: recipientData.email,
+            recipientAddress: recipientData.address,
+            recipientPincode: recipientData.pincode,
+            recipientProfilePicture: recipientData.profilePicture,
           });
+          console.log("Recipient food request saved to Firestore.");
+
+          if (pickupType === 'self') {
+            const donorNotificationRef = doc(db, `donors/${food.donorId}/notifications`, food.id);
+
+            await setDoc(donorNotificationRef, {
+              recipientId: user.uid,
+              recipientName: recipientData.name,
+              recipientPhone: recipientData.mobile,
+              recipientEmail: recipientData.email,
+              recipientProfilePicture: recipientData.profilePicture,
+              foodName: food.foodName,
+              pickupStatus: pickupStatus,
+              timestamp: new Date(),
+              comment: 'This recipient will pick up the food themselves.',
+            });
+            console.log("Notification created for Self Pickup with recipient details.");
+          }
+        } else {
+          console.log("Recipient food document already exists. Skipping creation.");
         }
       } catch (error) {
-        console.error(`Error saving ${pickupStatus} to Firestore:`, error);
+        console.error(`Error saving ${pickupStatus} notification to Firestore:`, error);
       }
+    } else {
+      console.log("User is not authenticated or food item information is missing.");
     }
 
     navigate('/recipient/dashboard');
   };
-
+  
   if (loading) return <p>Loading food requests...</p>;
 
   return (
@@ -129,7 +167,7 @@ const RequestFood = () => {
                   <img src={request.image} alt={request.foodType} className="w-full h-40 object-cover" />
                   <div className="p-4">
                     <div className="flex items-center mb-2">
-                      <img src={request.profilePicture} alt="Donor Profile" className="w-10 h-10 rounded-full mr-3" />
+                      <img src={request.donorProfilePicture} alt="Donor Profile" className="w-10 h-10 rounded-full mr-3" />
                       <p className="font-semibold text-lg">{request.donorName}</p>
                     </div>
                     <h3 className="text-xl font-semibold">{request.foodName}</h3>
@@ -138,6 +176,9 @@ const RequestFood = () => {
                     <p className="text-gray-600">Location: {request.location}</p>
                     <p className="text-gray-600">Pincode: {request.pincode}</p>
                     <p className="text-gray-600">Expiry Date: {request.expiryDate}</p>
+                    <p className="text-gray-600">Donor Email: {request.donorEmail}</p>
+                    <p className="text-gray-600">Donor Mobile: {request.donorMobile}</p>
+                    <p className="text-gray-600">Donor Address: {request.donorAddress}</p>
                     
                     <div className="flex justify-end space-x-2 mt-4">
                       <button 
