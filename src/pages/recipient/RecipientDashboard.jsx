@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getFirestore, collection, getDocs, doc, deleteDoc } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { useUserContext } from '../context/usercontext';
 
 const db = getFirestore();
@@ -33,10 +33,11 @@ const RecipientNavbar = () => {
 const RecipientDashboard = () => {
   const { user } = useUserContext();
   const [requests, setRequests] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [volunteerNames, setVolunteerNames] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch data from availablefood collection for the current user
     const fetchRequests = async () => {
       if (!user || !user.uid) {
         console.error('User not authenticated or UID not available');
@@ -65,35 +66,54 @@ const RecipientDashboard = () => {
     fetchRequests();
   }, [user]);
 
-  // Toggle the status of a request (Pending <-> Delivered)
-  const toggleStatus = (id) => {
-    setRequests(prevRequests =>
-      prevRequests.map(request =>
-        request.id === id
-          ? { ...request, status: request.status === 'Pending' ? 'Delivered' : 'Pending' }
-          : request
-      )
-    );
-  };
+  useEffect(() => {
+    if (!user) return;
 
-  // Reject a request and remove it from Firestore and the state
-  const handleReject = async (id) => {
-    if (!user || !user.uid) {
-      console.error('User ID is not available.');
-      return;
+    // Fetch notifications from Firestore
+    const notificationsRef = collection(db, `recipients/${user.uid}/recipientnotif`);
+    const unsubscribe = onSnapshot(notificationsRef, (snapshot) => {
+      const newNotifications = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      setNotifications(newNotifications);
+
+      // Fetch volunteer names for each notification
+      fetchVolunteerNames(newNotifications);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
+
+  const fetchVolunteerNames = async (notifications) => {
+    const names = {};
+
+    for (const notification of notifications) {
+      if (notification.volunteerId) {
+        try {
+          const volunteerDocRef = doc(db, `volunteers/${notification.volunteerId}`);
+          const volunteerDoc = await getDoc(volunteerDocRef);
+
+          if (volunteerDoc.exists()) {
+            names[notification.volunteerId] = volunteerDoc.data().name || 'Unknown';
+          }
+        } catch (error) {
+          console.error(`Error fetching volunteer data for ID ${notification.volunteerId}:`, error);
+        }
+      }
     }
 
-    try {
-      const recipientFoodRef = doc(db, `recipients/${user.uid}/availablefood`, id);
-      await deleteDoc(recipientFoodRef);
-
-      // Remove the rejected request from local state
-      setRequests(prevRequests => prevRequests.filter(request => request.id !== id));
-      console.log(`Request with id ${id} has been removed from Firestore and state.`);
-    } catch (error) {
-      console.error(`Error removing request: ${error}`);
-    }
+    setVolunteerNames(names);
   };
+
+  // Integrate volunteer information into requests
+  const mergedRequests = requests.map(request => {
+    const matchingNotification = notifications.find(notification => notification.foodName === request.foodName);
+    if (matchingNotification) {
+      return {
+        ...request,
+        volunteerName: volunteerNames[matchingNotification.volunteerId] || 'N/A',
+      };
+    }
+    return request;
+  });
 
   if (loading) return <p>Loading requests...</p>;
 
@@ -108,7 +128,7 @@ const RecipientDashboard = () => {
           <div className="mb-8">
             <h2 className="text-3xl font-semibold mb-4">My Requests</h2>
             <div className="bg-gray-50 shadow rounded-lg p-4">
-              {requests.length === 0 ? (
+              {mergedRequests.length === 0 ? (
                 <p>No requests yet.</p>
               ) : (
                 <table className="min-w-full table-auto">
@@ -121,11 +141,12 @@ const RecipientDashboard = () => {
                       <th className="border-b py-2 px-4">Donor Name</th>
                       <th className="border-b py-2 px-4">Pincode</th>
                       <th className="border-b py-2 px-4">Status</th>
+                      <th className="border-b py-2 px-4">Volunteer Name</th>
                       <th className="border-b py-2 px-4">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {requests.map(request => (
+                    {mergedRequests.map(request => (
                       <tr key={request.id} className="border-t">
                         <td className="py-2 px-4">{request.orderDate}</td>
                         <td className="py-2 px-4">{request.foodName}</td>
@@ -134,6 +155,7 @@ const RecipientDashboard = () => {
                         <td className="py-2 px-4">{request.donorName}</td>
                         <td className="py-2 px-4">{request.pincode}</td>
                         <td className="py-2 px-4">{request.status}</td>
+                        <td className="py-2 px-4">{request.volunteerName}</td>
                         <td className="py-2 px-4 space-x-2">
                           <button
                             onClick={() => handleReject(request.id)}

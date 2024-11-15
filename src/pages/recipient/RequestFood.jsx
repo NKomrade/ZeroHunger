@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getFirestore, collection, getDocs, doc, setDoc, getDoc } from 'firebase/firestore';
 import { useUserContext } from '../context/usercontext';
+import { format } from 'date-fns';
 
 const db = getFirestore();
 
@@ -34,7 +35,7 @@ const RequestFood = () => {
   const [foodRequests, setFoodRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const { user } = useUserContext(); // Access recipient's context
+  const { user } = useUserContext();
 
   useEffect(() => {
     const fetchFoodRequests = async () => {
@@ -50,14 +51,14 @@ const RequestFood = () => {
         for (const donorDoc of donorSnapshot.docs) {
           const donorId = donorDoc.id;
           const donorData = donorDoc.data();
-          const { name, address, email, mobile, profilePicture } = donorData; // Extract donor details
+          const { name, address, email, mobile, profilePicture } = donorData;
 
           const donorscheduleSnapshot = await getDocs(collection(db, `donors/${donorId}/donorschedule`));
           donorscheduleSnapshot.forEach((donationDoc) => {
             const donationData = donationDoc.data();
             requests.push({
               id: donationDoc.id,
-              donorId: donorId,
+              donorId,
               donorName: name,
               donorEmail: email,
               donorMobile: mobile,
@@ -89,25 +90,21 @@ const RequestFood = () => {
 
     if (user && user.uid && food) {
       try {
-        console.log("Initiating Self Pickup process...");
-
         const recipientFoodRef = doc(db, `recipients/${user.uid}/availablefood`, food.id);
         const existingDoc = await getDoc(recipientFoodRef);
 
         if (!existingDoc.exists()) {
-          console.log("Adding a new document to recipient's availablefood collection.");
-
           const recipientDocRef = doc(db, 'recipients', user.uid);
           const recipientDoc = await getDoc(recipientDocRef);
 
           if (!recipientDoc.exists()) {
-            console.log("Recipient profile data not found in Firestore.");
+            console.error("Recipient profile data not found in Firestore.");
             return;
           }
 
           const recipientData = recipientDoc.data();
-          console.log("Fetched recipient data:", recipientData);
 
+          // Save to recipient's availablefood collection
           await setDoc(recipientFoodRef, {
             ...food,
             orderDate: new Date().toISOString().split('T')[0],
@@ -118,9 +115,11 @@ const RequestFood = () => {
             recipientAddress: recipientData.address,
             recipientPincode: recipientData.pincode,
             recipientProfilePicture: recipientData.profilePicture,
+            volunteerId: pickupType === 'volunteer' ? user.uid : null,
+            volunteerName: pickupType === 'volunteer' ? user.displayName || 'Anonymous' : null,
           });
-          console.log("Recipient food request saved to Firestore.");
 
+          // Save notification for donor
           if (pickupType === 'self') {
             const donorNotificationRef = doc(db, `donors/${food.donorId}/notifications`, food.id);
 
@@ -135,22 +134,27 @@ const RequestFood = () => {
               timestamp: new Date(),
               comment: 'This recipient will pick up the food themselves.',
             });
-            console.log("Notification created for Self Pickup with recipient details.");
           }
         } else {
-          console.log("Recipient food document already exists. Skipping creation.");
+          alert("You have already requested this food item.");
         }
       } catch (error) {
         console.error(`Error saving ${pickupStatus} notification to Firestore:`, error);
       }
     } else {
-      console.log("User is not authenticated or food item information is missing.");
+      console.error("User is not authenticated or food item information is missing.");
     }
 
     navigate('/recipient/dashboard');
   };
-  
-  if (loading) return <p>Loading food requests...</p>;
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <p>Loading food requests...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -160,10 +164,10 @@ const RequestFood = () => {
         <div className="flex-grow p-6 ml-64">
           <h1 className="text-4xl font-bold mb-6 text-blue-500">Food Donation Requests</h1>
           <div>
-            <h2 className="text-3xl font-semibold mb-4">Pending Requests</h2>
+            <h2 className="text-3xl font-semibold mb-4">Available Requests</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {foodRequests.map((request) => (
-                <div key={`${request.id}-${request.donorId}`} className="bg-gray-50 shadow rounded-lg overflow-hidden">
+                <div key={`${request.id}-${request.donorId}`} className="bg-white shadow-lg rounded-lg overflow-hidden">
                   <img src={request.image} alt={request.foodType} className="w-full h-40 object-cover" />
                   <div className="p-4">
                     <div className="flex items-center mb-2">
@@ -175,18 +179,16 @@ const RequestFood = () => {
                     <p className="text-gray-600">Quantity: {request.quantity}</p>
                     <p className="text-gray-600">Location: {request.location}</p>
                     <p className="text-gray-600">Pincode: {request.pincode}</p>
-                    <p className="text-gray-600">Expiry Date: {request.expiryDate}</p>
+                    <p className="text-gray-600">Expiry Date: {format(new Date(request.expiryDate), 'dd MMM yyyy')}</p>
                     <p className="text-gray-600">Donor Email: {request.donorEmail}</p>
                     <p className="text-gray-600">Donor Mobile: {request.donorMobile}</p>
-                    <p className="text-gray-600">Donor Address: {request.donorAddress}</p>
-                    
                     <div className="flex justify-end space-x-2 mt-4">
-                      <button 
+                      <button
                         onClick={() => handlePickupOption(request, 'self')}
                         className="bg-green-500 text-white px-4 py-2 rounded">
                         Self Pickup
                       </button>
-                      <button 
+                      <button
                         onClick={() => handlePickupOption(request, 'volunteer')}
                         className="bg-blue-500 text-white px-4 py-2 rounded">
                         Want a Volunteer

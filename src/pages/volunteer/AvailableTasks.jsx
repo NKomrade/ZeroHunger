@@ -18,22 +18,23 @@ const AvailableTasks = () => {
         console.log("User context is still loading or user is not available.");
         return;
       }
-
+  
       try {
         console.log("Fetching tasks where status is 'Want a Volunteer'");
         const allTasks = [];
         const recipientSnapshot = await getDocs(collection(db, 'recipients'));
-
+  
         for (const recipientDoc of recipientSnapshot.docs) {
           const recipientData = recipientDoc.data();
           const availableFoodSnapshot = await getDocs(collection(db, `recipients/${recipientDoc.id}/availablefood`));
-
+  
           for (const foodDoc of availableFoodSnapshot.docs) {
             const foodData = foodDoc.data();
-
+  
             if (foodData.status === 'Want a Volunteer') {
               allTasks.push({
                 id: foodDoc.id,
+                recipientId: recipientDoc.id, // Ensure recipientId is included
                 recipientName: recipientData.name,
                 recipientPhone: recipientData.mobile,
                 recipientEmail: recipientData.email,
@@ -46,40 +47,75 @@ const AvailableTasks = () => {
             }
           }
         }
-
+  
         setTasks(allTasks);
       } catch (error) {
         console.error('Error fetching tasks:', error);
       }
       setLoadingTasks(false);
     };
-
+  
     fetchTasks();
-  }, [user, loading]);
+  }, [user, loading]);  
 
   const acceptTask = async (task) => {
     if (!user) return;
-
-    // Format the current date to yyyy-mm-dd
+  
+    // Format the current date to yyyy-mm-dd and time in hh:mm:ss
     const formattedDate = new Date().toISOString().split('T')[0];
-
+    const formattedTime = new Date().toLocaleTimeString();
+  
     try {
+      // Define references for the documents
       const taskRef = doc(db, `volunteers/${user.uid}/task`, task.id);
+      const recipientNotifRef = doc(db, `recipients/${task.recipientId}/recipientnotif`, task.id);
+      const donorNotifRef = doc(db, `donors/${task.donorId}/notifications`, task.id);
+  
+      // Prepare notification data including volunteer information
+      const notificationData = {
+        foodName: task.foodName,
+        foodType: task.foodType,
+        quantity: task.quantity,
+        recipientId: task.recipientId,
+        recipientName: task.recipientName,
+        recipientPhone: task.recipientPhone,
+        recipientEmail: task.recipientEmail,
+        recipientAddress: task.recipientAddress,
+        donorId: task.donorId,
+        donorName: task.donorName,
+        donorEmail: task.donorEmail,
+        donorAddress: task.donorAddress,
+        status: 'Pending',
+        acceptedDate: formattedDate,
+        acceptedTime: formattedTime,
+        volunteerId: user.uid, // Volunteer info
+        volunteerName: user.displayName || 'Anonymous', // Adjust as per user object
+        volunteerEmail: user.email,
+      };
+  
+      // Save to volunteer's tasks
       await setDoc(taskRef, {
         ...task,
-        status: 'Pending', // Initial status set to "Pending"
+        status: 'Pending',
         volunteerId: user.uid,
-        acceptedDate: formattedDate, // Use formatted date
+        acceptedDate: formattedDate,
+        acceptedTime: formattedTime,
       });
-      console.log("Task saved to Firestore:", task);
+  
+      // Save notification for recipient in their `recipientnotif` sub-collection
+      await setDoc(recipientNotifRef, notificationData);
+  
+      // Save notification for donor in their `notifications` sub-collection
+      await setDoc(donorNotifRef, notificationData);
+  
       alert(`Task accepted: ${task.foodName}`);
       setSelectedTask(null); // Close modal after accepting
       navigate('/volunteer/dashboard'); // Redirect to volunteer dashboard
     } catch (error) {
       console.error('Error accepting task:', error);
     }
-  };
-
+  };      
+  
   const openDetailsModal = (task) => {
     setSelectedTask(task);
   };
