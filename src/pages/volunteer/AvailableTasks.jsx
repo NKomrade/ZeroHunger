@@ -9,7 +9,7 @@ const AvailableTasks = () => {
   const { user, loading } = useUserContext();
   const [tasks, setTasks] = useState([]);
   const [loadingTasks, setLoadingTasks] = useState(true);
-  const [selectedTask, setSelectedTask] = useState(null); // For modal state
+  const [selectedTask, setSelectedTask] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -20,7 +20,7 @@ const AvailableTasks = () => {
       }
 
       try {
-        console.log("Fetching tasks where status is 'Want a Volunteer'");
+        console.log("Fetching tasks where recipient wants a volunteer.");
         const allTasks = [];
         const recipientSnapshot = await getDocs(collection(db, 'recipients'));
 
@@ -31,7 +31,7 @@ const AvailableTasks = () => {
           for (const foodDoc of availableFoodSnapshot.docs) {
             const foodData = foodDoc.data();
 
-            if (foodData.status === 'Want a Volunteer') {
+            if (foodData.recipientWants === 'Want a Volunteer') {
               allTasks.push({
                 id: foodDoc.id,
                 recipientId: recipientDoc.id, // Store recipientId for later updates
@@ -43,7 +43,7 @@ const AvailableTasks = () => {
                 foodPicture: foodData.image,
                 ...foodData,
               });
-              console.log(`Adding task for food ${foodData.foodName} with status "Want a Volunteer" from recipient ${recipientData.name}`);
+              console.log(`Adding task for food ${foodData.foodName} from recipient ${recipientData.name}`);
             }
           }
         }
@@ -60,19 +60,19 @@ const AvailableTasks = () => {
 
   const acceptTask = async (task) => {
     if (!user) return;
-  
+
     try {
       // Fetch volunteer details
       const volunteerRef = doc(db, `volunteers/${user.uid}`);
       const volunteerDoc = await getDoc(volunteerRef);
-  
+
       if (!volunteerDoc.exists()) {
         console.error("Volunteer details not found.");
         return;
       }
-  
+
       const volunteerData = volunteerDoc.data();
-  
+
       // Prepare volunteer task data
       const taskData = {
         ...task,
@@ -81,46 +81,34 @@ const AvailableTasks = () => {
         volunteerEmail: volunteerData.email || 'N/A',
         volunteerPhone: volunteerData.mobile || 'N/A',
         volunteerProfilePicture: volunteerData.profilePicture || 'N/A',
-        status: 'Pending', // Update status to Pending
-        acceptedDate: new Date().toISOString(), // Track when the task was accepted
+        recipientWants: 'Volunteer Assigned', // Update recipient's preference
+        acceptedDate: new Date().toISOString(),
       };
-  
+
       // Update the corresponding recipient's availablefood document
       const recipientFoodRef = doc(db, `recipients/${task.recipientId}/availablefood`, task.id);
       await setDoc(recipientFoodRef, taskData);
-  
-      // Save the task in the volunteer's task collection
+
+      // Save data to the volunteer's task collection
       const volunteerTaskRef = doc(db, `volunteers/${user.uid}/task`, task.id);
       await setDoc(volunteerTaskRef, taskData);
-  
-      // Update the corresponding donor's donorschedule document
-      const donorScheduleRef = doc(db, `donors/${task.donorId}/donorschedule`, task.id);
-      const donorScheduleDoc = await getDoc(donorScheduleRef);
-  
-      if (donorScheduleDoc.exists()) {
-        const donorScheduleData = donorScheduleDoc.data();
-        await setDoc(donorScheduleRef, {
-          ...donorScheduleData,
-          volunteerId: user.uid,
-          volunteerName: volunteerData.name || 'Anonymous',
-          volunteerEmail: volunteerData.email || 'N/A',
-          volunteerPhone: volunteerData.mobile || 'N/A',
-          volunteerProfilePicture: volunteerData.profilePicture || 'N/A',
-          status: 'Pending', // Update status
-        });
-        console.log("Volunteer details updated in donor's donorschedule collection.");
-      } else {
-        console.error("Donor schedule document not found.");
-      }
-  
-      console.log("Task updated with volunteer details:", task);
+
+      // Save a notification in the donor's notifications collection
+      const donorNotificationRef = doc(db, `donors/${task.donorId}/notifications`, task.id);
+      await setDoc(donorNotificationRef, {
+        ...taskData,
+        notificationType: 'Task Accepted',
+        notificationDate: new Date().toISOString(),
+      });
+
+      console.log("Task successfully updated and notifications sent.");
       alert(`You have accepted the task: ${task.foodName}`);
-      setSelectedTask(null); // Close modal after accepting
+      setSelectedTask(null);
       navigate('/volunteer/dashboard'); // Redirect to volunteer dashboard
     } catch (error) {
       console.error('Error accepting task:', error);
     }
-  };  
+  };
 
   const openDetailsModal = (task) => {
     setSelectedTask(task);
@@ -130,7 +118,7 @@ const AvailableTasks = () => {
     setSelectedTask(null);
   };
 
-  if (loading) {
+  if (loadingTasks) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <p>Loading tasks...</p>
@@ -155,17 +143,23 @@ const AvailableTasks = () => {
       <div className="flex">
         <div className="fixed w-64 bg-blue-500 text-white h-[calc(100vh-60px)] p-4">
           <nav className="flex flex-col space-y-4">
-            <Link to="/volunteer/dashboard" className="hover:bg-blue-600 p-2 rounded">Dashboard Overview</Link>
-            <Link to="/volunteer/tasks" className="hover:bg-blue-600 p-2 rounded">My Tasks</Link>
-            <Link to="/volunteer/profile" className="hover:bg-blue-600 p-2 rounded">Profile</Link>
+            <Link to="/volunteer/dashboard" className="hover:bg-blue-600 p-2 rounded">
+              Dashboard Overview
+            </Link>
+            <Link to="/volunteer/tasks" className="hover:bg-blue-600 p-2 rounded">
+              My Tasks
+            </Link>
+            <Link to="/volunteer/profile" className="hover:bg-blue-600 p-2 rounded">
+              Profile
+            </Link>
           </nav>
         </div>
 
         <div className="flex-grow p-6 bg-white min-h-screen ml-64">
           <h1 className="text-3xl font-bold mb-6 text-blue-500">Available Tasks</h1>
-          
+
           {tasks.length === 0 ? (
-            <p>No tasks available for the selected criteria.</p>
+            <p>No tasks available.</p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {tasks.map((task) => (
@@ -192,7 +186,6 @@ const AvailableTasks = () => {
         </div>
       </div>
 
-      {/* Modal Window */}
       {selectedTask && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
           <div className="bg-white p-6 rounded-lg w-full max-w-3xl">

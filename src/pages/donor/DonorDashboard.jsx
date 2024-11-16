@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getFirestore, collection, doc, onSnapshot } from 'firebase/firestore';
+import { getFirestore, collection, doc, onSnapshot, updateDoc, getDocs } from 'firebase/firestore';
 import { useUserContext } from '../context/usercontext';
 import { Bar } from 'react-chartjs-2';
+import Certificate from './donorcertificate';
 import Confetti from 'react-confetti';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 
@@ -51,46 +52,59 @@ const DonorDashboard = () => {
   const [monthlyDonationCount, setMonthlyDonationCount] = useState(0);
   const [certificateEligible, setCertificateEligible] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
-  const [notifications, setNotifications] = useState([]);
-  const [viewedNotifications, setViewedNotifications] = useState([]);
-  const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [showCertificateModal, setShowCertificateModal] = useState(false); // State for modal visibility
+  const [milestone, setMilestone] = useState(0);
 
   useEffect(() => {
     if (!user) return;
 
-    const donorScheduleRef = collection(db, `donors/${user.uid}/donorschedule`);
+    const fetchDonations = async () => {
+      try {
+        const donorScheduleRef = collection(db, `donors/${user.uid}/donorschedule`);
+        const donorNotificationsRef = collection(db, `donors/${user.uid}/notifications`);
 
-    const unsubscribe = onSnapshot(donorScheduleRef, (snapshot) => {
-      const donations = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setDonationHistory(donations);
-      calculateMonthlyData(donations);
+        const scheduleSnapshot = await getDocs(donorScheduleRef);
+        const notificationSnapshot = await getDocs(donorNotificationsRef);
 
-      const newNotifications = donations.filter(
-        (donation) => donation.pickupStatus && !viewedNotifications.includes(donation.id)
-      );
+        // Create a lookup table for notifications
+        const notifications = {};
+        notificationSnapshot.forEach((doc) => {
+          const data = doc.data();
+          notifications[doc.id] = {
+            recipientName: data.recipientName || 'N/A',
+            volunteerName: data.volunteerName || 'N/A',
+          };
+        });
 
-      if (newNotifications.length > 0) {
-        setNotifications(newNotifications);
-        setShowNotificationModal(true);
+        // Merge data from both collections
+        const donations = scheduleSnapshot.docs.map((doc) => {
+          const data = doc.data();
+          const notification = notifications[doc.id] || {};
+          return {
+            id: doc.id,
+            ...data,
+            recipientName: notification.recipientName,
+            volunteerName: notification.volunteerName,
+          };
+        });
+
+        setDonationHistory(donations);
+        calculateMonthlyData(donations);
+      } catch (error) {
+        console.error('Error fetching donation history:', error);
       }
-    });
+    };
 
-    return () => unsubscribe();
-  }, [user, viewedNotifications]);
+    fetchDonations();
+  }, [user]);
 
-  const handleNotificationClose = () => {
-    setShowNotificationModal(false);
-
-    const viewedIds = notifications.map((notif) => notif.id);
-    setViewedNotifications((prev) => [...prev, ...viewedIds]);
-  };
-
+  // Calculate monthly donation amounts
   const calculateMonthlyData = (donations) => {
     const data = {};
-    let count = donations.length;
+    let count = 0;
 
     donations.forEach((donation) => {
-      const date = new Date(donation.date);
+      const date = new Date(donation.date); // Ensure date is parsed correctly
       const month = date.toLocaleString('default', { month: 'short', year: 'numeric' });
       const quantity = parseInt(donation.quantity) || 0;
 
@@ -99,19 +113,35 @@ const DonorDashboard = () => {
       } else {
         data[month] = quantity;
       }
+      // Count donations for progress
+      if (date.getMonth() === new Date().getMonth()) count++;
     });
 
     setMonthlyData(data);
     setMonthlyDonationCount(count);
 
-    if (count > 0 && count % 5 === 0) {
+    if (count > 0 && count % 5 === 0 && count > milestone){
       setCertificateEligible(true);
-      setShowConfetti(true);
+      setShowConfetti(true); // Show confetti effect
+      setMilestone(newMilestone);
 
+      // Hide confetti after a short delay
       setTimeout(() => setShowConfetti(false), 5000);
     }
   };
 
+  const toggleStatus = async (donationId, currentStatus) => {
+    const newStatus = currentStatus === 'Delivered' ? 'In Transit' : 'Delivered';
+    const donationDocRef = doc(db, `donors/${user.uid}/donorschedule`, donationId);
+
+    try {
+      await updateDoc(donationDocRef, { status: newStatus });
+    } catch (error) {
+      console.error('Error updating status:', error);
+    }
+  };
+
+  // Prepare data for Bar Chart
   const chartData = {
     labels: Object.keys(monthlyData),
     datasets: [
@@ -125,6 +155,15 @@ const DonorDashboard = () => {
     ],
   };
 
+  // Function to handle opening and closing the certificate modal
+  const handleViewCertificate = () => {
+    setShowCertificateModal(true); // Show the certificate modal
+  };
+
+  const handleCloseModal = () => {
+    setShowCertificateModal(false); // Hide the certificate modal
+  };
+
   return (
     <div className="bg-white min-h-screen">
       {showConfetti && <Confetti />}
@@ -132,19 +171,31 @@ const DonorDashboard = () => {
       <div className="flex pt-16">
         <Sidebar />
         <div className="flex-grow p-6 ml-64">
-          <h1 className="text-4xl font-bold mb-6 text-blue-500">Donation Dashboard</h1>
+          <h1 className="text-4xl font-bold mb-6 text-blue-500">Donation Bar</h1>
           <div className="bg-gray-50 shadow rounded-lg p-4 mb-6">
             <div className="mb-4">
-              <p>Monthly Donations Progress: {monthlyDonationCount % 5}/5</p>
-              <div className="w-full bg-gray-200 rounded-full h-4">
-                <div
-                  className="bg-blue-500 h-4 rounded-full"
-                  style={{ width: `${(monthlyDonationCount % 5) * 20}%` }}
-                ></div>
-              </div>
+                <p>Monthly Donations Progress: {monthlyDonationCount % 5}/5</p>
+                <div className="w-full bg-gray-200 rounded-full h-4">
+                  <div
+                    className="bg-blue-500 h-4 rounded-full"
+                    style={{ width: `${(monthlyDonationCount % 5) * 20}%` }}
+                  >
+                  </div>
+                </div>
             </div>
+            {certificateEligible && (
+              <div className="p-4 mb-6 bg-green-100 border border-green-400 text-green-800 rounded-lg">
+                🎉 Congratulations! Your achievement certificate is ready.{' '}
+                <button
+                  onClick={handleViewCertificate} // Show the modal on click
+                  className="underline text-blue-600 hover:text-blue-800 ml-2"
+                >
+                  View it
+                </button>
+              </div>
+            )}
 
-            <div className="max-h-96 overflow-y-auto">
+            <div className="max-h-96 overflow-y-auto"> {/* This makes the table container scrollable */}
               {donationHistory.length === 0 ? (
                 <p>No donations found.</p>
               ) : (
@@ -155,21 +206,20 @@ const DonorDashboard = () => {
                       <th className="border-b py-2 px-4">Food Name</th>
                       <th className="border-b py-2 px-4">Food Type</th>
                       <th className="border-b py-2 px-4">Quantity</th>
-                      <th className="border-b py-2 px-4">Donation Status</th>
                       <th className="border-b py-2 px-4">Recipient Name</th>
-                      <th className="border-b py-2 px-4">Volunteer</th>
+                      <th className="border-b py-2 px-4">Volunteer Name</th>
                     </tr>
                   </thead>
                   <tbody>
+                    {/* Reverse the array to show latest entries first and limit to last 5 */}
                     {donationHistory.slice(-5).reverse().map((donation) => (
                       <tr key={donation.id} className="border-t">
                         <td className="py-2 px-4">{donation.date}</td>
                         <td className="py-2 px-4">{donation.foodName}</td>
                         <td className="py-2 px-4">{donation.foodType}</td>
                         <td className="py-2 px-4">{donation.quantity}</td>
-                        <td className="py-2 px-4">{donation.pickupStatus || 'Pending'}</td>
-                        <td className="py-2 px-4">{donation.recipientName || 'N/A'}</td>
-                        <td className="py-2 px-4">{donation.volunteerName || 'N/A'}</td>
+                        <td className="py-2 px-4">{donation.recipientName}</td>
+                        <td className="py-2 px-4">{donation.volunteerName}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -177,13 +227,27 @@ const DonorDashboard = () => {
               )}
             </div>
           </div>
-
           <div className="bg-gray-50 shadow rounded-lg p-4 mt-6">
             <h2 className="text-2xl font-bold mb-4 text-blue-500">Monthly Donation Summary</h2>
-            <Bar data={chartData} options={{ responsive: true, plugins: { legend: { position: 'top' } } }} />
+            <Bar data={chartData} options={{ responsive: true, plugins: { legend: { position: 'top' }}}} />
           </div>
         </div>
       </div>
+
+      {/* Modal for displaying the certificate */}
+      {showCertificateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-11/12 md:w-3/4 lg:w-1/2">
+            <button
+              onClick={handleCloseModal}
+              className="text-white hover:text-gray-800 absolute top-4 right-4"
+            >
+              Close
+            </button>
+            <Certificate donorName={user.displayName} />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

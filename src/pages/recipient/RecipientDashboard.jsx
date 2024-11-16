@@ -168,7 +168,7 @@ const RecipientDashboard = () => {
                         <td className="py-2 px-4">{request.quantity}</td>
                         <td className="py-2 px-4">{request.donorName}</td>
                         <td className="py-2 px-4">{request.pincode}</td>
-                        <td className="py-2 px-4">{request.status}</td>
+                        <td className="py-2 px-4">{request.recipientWants}</td>
                         <td className="py-2 px-4">{request.volunteer}</td>
                         <td className="py-2 px-4 space-x-2">
                           <button
