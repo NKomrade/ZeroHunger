@@ -30,20 +30,24 @@ const VolunteerTaskManager = () => {
   const { user } = useUserContext();
   const [myTasks, setMyTasks] = useState([]);
 
-  // Real-time listener for "My Tasks" (tasks accepted by the volunteer)
   useEffect(() => {
     if (!user) return;
 
     const tasksRef = collection(db, `volunteers/${user.uid}/task`);
-    const unsubscribe = onSnapshot(tasksRef, (snapshot) => {
-      const tasksData = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setMyTasks(tasksData);
-    });
+    const unsubscribe = onSnapshot(
+      tasksRef,
+      (snapshot) => {
+        const tasksData = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        setMyTasks(tasksData);
+      },
+      (error) => {
+        console.error("Error with snapshot listener:", error);
+      }
+    );
 
     return () => unsubscribe();
   }, [user]);
 
-  // Toggle the task status between "Pending" and "Delivered"
   const toggleStatus = async (taskId, currentStatus) => {
     const newStatus = currentStatus === 'Pending' ? 'Delivered' : 'Pending';
     const taskRef = doc(db, `volunteers/${user.uid}/task`, taskId);
@@ -55,7 +59,6 @@ const VolunteerTaskManager = () => {
     }
   };
 
-  // Cancel and remove the task
   const cancelTask = async (taskId) => {
     const taskRef = doc(db, `volunteers/${user.uid}/task`, taskId);
 
@@ -72,8 +75,6 @@ const VolunteerTaskManager = () => {
       <VolunteerNavbar />
       <div className="flex flex-grow">
         <VolunteerSidebar />
-        
-        {/* My Tasks (Dashboard) Section */}
         <div className="flex-grow p-6 ml-64">
           <h1 className="text-4xl font-bold mb-6 text-blue-500">Volunteer Dashboard Overview</h1>
           <div className="bg-gray-50 shadow rounded-lg p-4">
