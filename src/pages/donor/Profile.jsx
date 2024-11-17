@@ -21,7 +21,6 @@ const DonorProfile = () => {
     address: '',
     organizationName: '',
     pincode: '',
-    fssaiNumber: '',
     role: 'Donor',
     profilePicture: '',
     certificates: [],
@@ -33,8 +32,7 @@ const DonorProfile = () => {
 
   useEffect(() => {
     const fetchCertificates = async () => {
-      const db = getFirestore();
-      const userDocRef = doc(db, 'donors', user.uid);
+      const userDocRef = doc(db, 'donors', auth.currentUser.uid);
       const userDoc = await getDoc(userDocRef);
 
       if (userDoc.exists()) {
@@ -43,7 +41,7 @@ const DonorProfile = () => {
     };
 
     fetchCertificates();
-  }, [user]);
+  }, []);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -53,7 +51,8 @@ const DonorProfile = () => {
           const userDocRef = doc(db, 'donors', currentUser.uid);
           const userDoc = await getDoc(userDocRef);
           if (userDoc.exists()) {
-            setUser(userDoc.data());
+            const userData = userDoc.data();
+            setUser(userData);
           } else {
             console.error('No user data found');
           }
@@ -126,22 +125,22 @@ const DonorProfile = () => {
         const baseUrl = 'https://firebasestorage.googleapis.com/v0/b/[your-project-id].appspot.com/o/';
         return decodeURIComponent(url.replace(baseUrl, '').split('?')[0]);
       };
-  
+
       const pdfPath = getPathFromUrl(pdfUrl);
       const thumbnailPath = getPathFromUrl(thumbnailUrl);
-  
+
       // Delete the PDF and thumbnail from storage
       const pdfRef = ref(storage, pdfPath);
       await deleteObject(pdfRef);
-  
+
       const thumbnailRef = ref(storage, thumbnailPath);
       await deleteObject(thumbnailRef);
-  
+
       // Update Firestore
-      const userDocRef = doc(db, 'donors', user.uid);
+      const userDocRef = doc(db, 'donors', auth.currentUser.uid);
       const updatedCertificates = certificates.filter(cert => cert.pdfUrl !== pdfUrl);
       await updateDoc(userDocRef, { certificates: updatedCertificates });
-  
+
       // Update local state
       setCertificates(updatedCertificates);
       alert('Certificate deleted successfully');
@@ -252,20 +251,6 @@ const DonorProfile = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">FSSAI Number</label>
-                  <input
-                    type="text"
-                    name="fssaiNumber"
-                    value={user.fssaiNumber || ''}
-                    onChange={(e) => setUser({ ...user, fssaiNumber: e.target.value })}
-                    disabled={!isEditing}
-                    className={`w-full border ${isEditing ? 'bg-white' : 'bg-gray-100'} rounded p-2`}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
                   <label className="block text-sm font-medium mb-2">Pincode</label>
                   <input
                     type="text"
@@ -276,6 +261,9 @@ const DonorProfile = () => {
                     className={`w-full border ${isEditing ? 'bg-white' : 'bg-gray-100'} rounded p-2`}
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 mb-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">Address</label>
                   <input

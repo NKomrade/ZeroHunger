@@ -8,7 +8,7 @@ export default function RecipientSignup() {
   const { handleSignup } = useUserContext();
   const [formData, setFormData] = useState({
     name: '',
-    mobile: '',
+    mobile: '+91',
     email: '',
     password: '',
     organizationName: '',
@@ -17,17 +17,62 @@ export default function RecipientSignup() {
   });
 
   const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState({}); // State to store validation errors
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prevData) => ({ ...prevData, [name]: value }));
+
+    setFormData((prevData) => {
+      let updatedValue = value;
+
+      // Maintain +91 prefix for mobile
+      if (name === 'mobile' && value.length <= 13) {
+        if (!value.startsWith('+91')) {
+          updatedValue = '+91' + value.replace('+91', '');
+        }
+      }
+
+      return { ...prevData, [name]: updatedValue };
+    });
+  };
+
+  const validateFields = () => {
+    const newErrors = {};
+
+    if (!/^[a-zA-Z\s]+$/.test(formData.name)) {
+      newErrors.name = 'Name must only contain letters and spaces.';
+    }
+    if (!/^\+91[0-9]{10}$/.test(formData.mobile)) {
+      newErrors.mobile = 'Mobile number must be 10 digits with +91 prefix.';
+    }
+    if (!/^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(formData.email)) {
+      newErrors.email = 'Email must be a valid Gmail address (e.g., user@gmail.com).';
+    }
+    if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters long.';
+    }
+    if (!formData.organizationName.trim()) {
+      newErrors.organizationName = 'Organization name is required.';
+    }
+    if (!formData.address.trim()) {
+      newErrors.address = 'Address is required.';
+    }
+    if (!/^[0-9]{6}$/.test(formData.pincode)) {
+      newErrors.pincode = 'Pincode must be exactly 6 digits.';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0; // Valid if no errors
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!validateFields()) {
+      return;
+    }
+
     try {
-      // Use context's handleSignup with 'Recipient' role
       await handleSignup('Recipient', formData);
       navigate('/recipient/dashboard'); // Redirect to Recipient Dashboard after successful signup
     } catch (error) {
@@ -35,7 +80,7 @@ export default function RecipientSignup() {
       alert('An error occurred during signup. Please try again.');
     }
   };
-  
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <div className="bg-white p-8 rounded-lg shadow-lg max-w-lg w-full relative">
@@ -50,45 +95,57 @@ export default function RecipientSignup() {
 
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {['name', 'mobile'].map((field) => (
-              <div key={field} className="mb-4">
-                <label className="block text-neutral-900 mb-1" htmlFor={field}>
-                  {field.charAt(0).toUpperCase() + field.slice(1)}
-                </label>
-                <input
-                  type="text"
-                  name={field}
-                  id={field}
-                  value={formData[field]}
-                  onChange={handleChange}
-                  placeholder={`Enter your ${field}`}
-                  className="w-full border rounded p-2 placeholder-gray-400"
-                  required
-                />
-              </div>
-            ))}
-
-            {/* Email and Password fields in the same row */}
+            {/* Name Field */}
             <div className="mb-4">
-              <label className="block text-neutral-900 mb-1" htmlFor="email">
-                Email
-              </label>
+              <label className="block text-neutral-900 mb-1" htmlFor="name">Name</label>
+              <input
+                type="text"
+                name="name"
+                id="name"
+                value={formData.name}
+                onChange={handleChange}
+                placeholder="Enter your name"
+                className="w-full border rounded p-2 placeholder-gray-400"
+                required
+              />
+              {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
+            </div>
+
+            {/* Mobile Field */}
+            <div className="mb-4">
+              <label className="block text-neutral-900 mb-1" htmlFor="mobile">Mobile</label>
+              <input
+                type="text"
+                name="mobile"
+                id="mobile"
+                value={formData.mobile}
+                onChange={handleChange}
+                placeholder="+91xxxxxxxxxx"
+                className="w-full border rounded p-2 placeholder-gray-400"
+                required
+              />
+              {errors.mobile && <p className="text-red-500 text-sm">{errors.mobile}</p>}
+            </div>
+
+            {/* Email Field */}
+            <div className="mb-4">
+              <label className="block text-neutral-900 mb-1" htmlFor="email">Email</label>
               <input
                 type="email"
                 name="email"
                 id="email"
                 value={formData.email}
                 onChange={handleChange}
-                placeholder="Enter your email"
+                placeholder="Enter your Gmail address"
                 className="w-full border rounded p-2 placeholder-gray-400"
                 required
               />
+              {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
             </div>
 
+            {/* Password Field */}
             <div className="mb-4 relative">
-              <label className="block text-neutral-900 mb-1" htmlFor="password">
-                Password
-              </label>
+              <label className="block text-neutral-900 mb-1" htmlFor="password">Password</label>
               <input
                 type={showPassword ? 'text' : 'password'}
                 name="password"
@@ -106,9 +163,10 @@ export default function RecipientSignup() {
               >
                 {showPassword ? <FaEyeSlash /> : <FaEye />}
               </button>
+              {errors.password && <p className="text-red-500 text-sm">{errors.password}</p>}
             </div>
 
-            {/* Organization Name field */}
+            {/* Organization Name Field */}
             <div className="col-span-1 md:col-span-2 mb-4">
               <label className="block text-neutral-900 mb-1" htmlFor="organizationName">
                 Organization Name
@@ -123,13 +181,12 @@ export default function RecipientSignup() {
                 className="w-full border rounded p-2 placeholder-gray-400"
                 required
               />
+              {errors.organizationName && <p className="text-red-500 text-sm">{errors.organizationName}</p>}
             </div>
 
-            {/* Address field spanning across two columns */}
+            {/* Address Field */}
             <div className="col-span-1 md:col-span-2 mb-4">
-              <label className="block text-neutral-900 mb-1" htmlFor="address">
-                Address
-              </label>
+              <label className="block text-neutral-900 mb-1" htmlFor="address">Address</label>
               <input
                 type="text"
                 name="address"
@@ -140,23 +197,23 @@ export default function RecipientSignup() {
                 className="w-full border rounded p-2 placeholder-gray-400"
                 required
               />
+              {errors.address && <p className="text-red-500 text-sm">{errors.address}</p>}
             </div>
 
-            {/* Single Pincode field */}
+            {/* Pincode Field */}
             <div className="col-span-1 md:col-span-2 mb-4">
-              <label className="block text-neutral-900 mb-1" htmlFor="pincode">
-                Pincode
-              </label>
+              <label className="block text-neutral-900 mb-1" htmlFor="pincode">Pincode</label>
               <input
                 type="text"
                 name="pincode"
                 id="pincode"
                 value={formData.pincode}
                 onChange={handleChange}
-                placeholder="Enter your preferred pincode"
+                placeholder="Enter your pincode"
                 className="w-full border rounded p-2 placeholder-gray-400"
                 required
               />
+              {errors.pincode && <p className="text-red-500 text-sm">{errors.pincode}</p>}
             </div>
           </div>
 

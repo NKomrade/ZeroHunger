@@ -72,8 +72,9 @@ const DonorDashboard = () => {
           const data = doc.data();
           notifications[doc.id] = {
             recipientName: data.recipientName || 'N/A',
-            volunteerName: data.volunteerName || 'N/A',
-            foodStatus: data.Foodstatus || '-', // Fetching Foodstatus
+            volunteerName:
+              data.recipientWants === 'Self Pickup' ? 'Recipient only' : data.volunteerName || 'N/A',
+              foodStatus: data.recipientWants === 'Self Pickup' ? 'Picked Up' : data.Foodstatus || '-',
           };
         });
 

@@ -8,6 +8,25 @@ const Contact = () => {
     message: '',
   });
 
+  const [errors, setErrors] = useState({});
+
+  const validateFields = () => {
+    const newErrors = {};
+
+    if (!/^[a-zA-Z\s]+$/.test(formData.name)) {
+      newErrors.name = 'Name must only contain letters and spaces.';
+    }
+    if (!/^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(formData.email)) {
+      newErrors.email = 'Email must be a valid Gmail address (e.g., user@gmail.com).';
+    }
+    if (formData.message.trim().length === 0) {
+      newErrors.message = 'Message cannot be empty.';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -15,12 +34,20 @@ const Contact = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Here, you can handle form submission (e.g., send to an API or admin email)
+
+    if (!validateFields()) {
+      return;
+    }
+
+    // Simulate sending email
+    console.log('Sending email to: dear.nk.comrade@gmail.com');
     console.log('Form submitted:', formData);
+    alert('Your message has been sent successfully!');
+    setFormData({ name: '', email: '', message: '' }); // Reset form
   };
 
   return (
-    <div className="bg-white min-h-screen"> {/* Full page background color */}
+    <div className="bg-white min-h-screen">
       {/* Navbar Component */}
       <nav className="bg-blue-500 p-4 flex justify-between items-center">
         <div className="text-white font-bold text-lg"><Link to="/">ZeroHunger</Link></div>
@@ -50,6 +77,7 @@ const Contact = () => {
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
               placeholder="Your Name"
             />
+            {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
           </div>
 
           <div className="mb-4">
@@ -66,6 +94,7 @@ const Contact = () => {
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
               placeholder="Your Email"
             />
+            {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
           </div>
 
           <div className="mb-4">
@@ -82,6 +111,7 @@ const Contact = () => {
               rows="5"
               placeholder="Your Message"
             ></textarea>
+            {errors.message && <p className="text-red-500 text-sm mt-1">{errors.message}</p>}
           </div>
 
           <button
@@ -91,6 +121,28 @@ const Contact = () => {
             Send Message
           </button>
         </form>
+      </div>
+
+      {/* Team Contact Cards */}
+      <div className="mt-12 px-6">
+        <h2 className="text-3xl font-bold text-center mb-6 text-neutral-900">Contact our team</h2>
+        <div className="flex flex-wrap justify-center gap-6">
+          {[
+            { name: 'Adarsh Sharma', contact: '+91 87954 27984' },
+            { name: 'Harsh Mishra', contact: '+91 99587 37531' },
+            { name: 'Kapish Goel', contact: '+91 97176 88067' },
+            { name: 'Swarnim Sharma', contact: '+91 85956 00798' },
+            { name: 'Swastik Guha Roy', contact: '+91 70294 93046' },
+          ].map((person, index) => (
+            <div
+              key={index}
+              className="bg-gray-100 rounded-lg shadow-lg p-4 w-64 text-center flex flex-col items-center"
+            >
+              <h3 className="text-xl font-bold text-blue-500">{person.name}</h3>
+              <p className="text-gray-700 mt-2">{person.contact}</p>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

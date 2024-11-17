@@ -7,36 +7,81 @@ export default function DonorSignup({ setUserRole }) {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false); // Loading state
-  const [error, setError] = useState(null); // Error state
+  const [error, setError] = useState({}); // Error state for individual fields
   const { handleSignup } = useUserContext(); // Access handleSignup from context
   const [formData, setFormData] = useState({
     role: 'Donor',
     name: '',
-    mobile: '',
+    mobile: '+91',
     email: '',
     password: '',
     organizationName: '',
     address: '',
     pincode: '',
-    fssaiNumber: '',
   });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prevData) => ({ ...prevData, [name]: value }));
+
+    setFormData((prevData) => {
+      let updatedValue = value;
+
+      if (name === 'mobile' && value.length <= 13) {
+        // Ensure +91 prefix is maintained
+        if (!value.startsWith('+91')) {
+          updatedValue = '+91' + value.replace('+91', '');
+        }
+      }
+
+      return { ...prevData, [name]: updatedValue };
+    });
+  };
+
+  const validateFields = () => {
+    const newErrors = {};
+
+    if (!/^[a-zA-Z\s]+$/.test(formData.name)) {
+      newErrors.name = 'Name must only contain letters and spaces.';
+    }
+    if (!/^\+91[0-9]{10}$/.test(formData.mobile)) {
+      newErrors.mobile = 'Mobile number must be 10 digits with +91 prefix.';
+    }
+    if (!/^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(formData.email)) {
+      newErrors.email = 'Email must be a valid Gmail address (e.g., user@gmail.com).';
+    }
+    if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters long.';
+    }
+    if (!formData.organizationName.trim()) {
+      newErrors.organizationName = 'Organization name is required.';
+    }
+    if (!formData.address.trim()) {
+      newErrors.address = 'Address is required.';
+    }
+    if (!/^[0-9]{6}$/.test(formData.pincode)) {
+      newErrors.pincode = 'Pincode must be exactly 6 digits.';
+    }
+
+    setError(newErrors);
+    return Object.keys(newErrors).length === 0; // No errors mean valid
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
+    setError({}); // Clear previous errors
+
+    if (!validateFields()) {
+      setLoading(false);
+      return;
+    }
 
     try {
       await handleSignup('Donor', formData, navigate); // Pass navigate as a parameter
       setUserRole('Donor'); // Set the user role after successful signup
     } catch (error) {
       console.error('Error during signup:', error);
-      setError('An error occurred during signup. Please try again.');
+      setError({ general: 'An error occurred during signup. Please try again.' });
     } finally {
       setLoading(false);
     }
@@ -53,7 +98,7 @@ export default function DonorSignup({ setUserRole }) {
           Donor Signup
         </h2>
 
-        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+        {error.general && <p className="text-red-500 text-center mb-4">{error.general}</p>}
 
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -70,6 +115,7 @@ export default function DonorSignup({ setUserRole }) {
                 className="w-full border rounded p-2 placeholder-gray-400"
                 required
               />
+              {error.name && <p className="text-red-500 text-sm">{error.name}</p>}
             </div>
 
             {/* Mobile Field */}
@@ -81,10 +127,11 @@ export default function DonorSignup({ setUserRole }) {
                 id="mobile"
                 value={formData.mobile}
                 onChange={handleChange}
-                placeholder="Enter your mobile number"
+                placeholder="+91xxxxxxxxxx"
                 className="w-full border rounded p-2 placeholder-gray-400"
                 required
               />
+              {error.mobile && <p className="text-red-500 text-sm">{error.mobile}</p>}
             </div>
 
             {/* Email Field */}
@@ -96,10 +143,11 @@ export default function DonorSignup({ setUserRole }) {
                 id="email"
                 value={formData.email}
                 onChange={handleChange}
-                placeholder="Enter your email"
+                placeholder="Enter your Gmail address"
                 className="w-full border rounded p-2 placeholder-gray-400"
                 required
               />
+              {error.email && <p className="text-red-500 text-sm">{error.email}</p>}
             </div>
 
             {/* Password Field with Toggle Icon */}
@@ -123,6 +171,7 @@ export default function DonorSignup({ setUserRole }) {
               >
                 {showPassword ? <FaEyeSlash /> : <FaEye />}
               </button>
+              {error.password && <p className="text-red-500 text-sm">{error.password}</p>}
             </div>
 
             {/* Organization Name Field */}
@@ -138,6 +187,7 @@ export default function DonorSignup({ setUserRole }) {
                 className="w-full border rounded p-2 placeholder-gray-400"
                 required
               />
+              {error.organizationName && <p className="text-red-500 text-sm">{error.organizationName}</p>}
             </div>
 
             {/* Pincode Field */}
@@ -153,6 +203,7 @@ export default function DonorSignup({ setUserRole }) {
                 className="w-full border rounded p-2 placeholder-gray-400"
                 required
               />
+              {error.pincode && <p className="text-red-500 text-sm">{error.pincode}</p>}
             </div>
 
             {/* Address Field */}
@@ -168,28 +219,14 @@ export default function DonorSignup({ setUserRole }) {
                 className="w-full border rounded p-2 placeholder-gray-400"
                 required
               />
-            </div>
-
-            {/* FSSAI Number Field */}
-            <div className="mb-4">
-              <label className="block text-neutral-900 mb-1" htmlFor="fssaiNumber">FSSAI Number</label>
-              <input
-                type="text"
-                name="fssaiNumber"
-                id="fssaiNumber"
-                value={formData.fssaiNumber}
-                onChange={handleChange}
-                placeholder="Enter your FSSAI number"
-                className="w-full border rounded p-2 placeholder-gray-400"
-                required
-              />
+              {error.address && <p className="text-red-500 text-sm">{error.address}</p>}
             </div>
           </div>
           <button
             type="submit"
             className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition mt-4"
           >
-           {loading ? 'Signing Up...' : 'Sign Up'}
+            {loading ? 'Signing Up...' : 'Sign Up'}
           </button>
         </form>
       </div>

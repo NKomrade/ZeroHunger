@@ -32,7 +32,7 @@ const VolunteerTaskManager = () => {
 
   useEffect(() => {
     if (!user) return;
-  
+
     const tasksRef = collection(db, `volunteers/${user.uid}/task`);
     const unsubscribe = onSnapshot(
       tasksRef,
@@ -44,26 +44,26 @@ const VolunteerTaskManager = () => {
         console.error("Error with snapshot listener:", error);
       }
     );
-  
+
     return () => unsubscribe();
   }, [user]);
-  
+
   const toggleFoodstatus = async (taskId, currentStatus) => {
     const newStatus = currentStatus === 'Pending' ? 'Delivered' : 'Pending';
-  
+
     try {
       // Update Foodstatus in volunteer's task collection
       const taskRef = doc(db, `volunteers/${user.uid}/task`, taskId);
       await updateDoc(taskRef, { Foodstatus: newStatus });
-  
+
       console.log(`Foodstatus updated to ${newStatus} in volunteers/task for task ${taskId}`);
-  
+
       // Update Foodstatus in the corresponding donor's notifications collection
       const donorsSnapshot = await getDocs(collection(db, 'donors'));
       for (const donorDoc of donorsSnapshot.docs) {
         const donorId = donorDoc.id;
         const notificationRef = doc(db, `donors/${donorId}/notifications`, taskId);
-  
+
         // Check if the notification exists
         const notificationDoc = await getDoc(notificationRef);
         if (notificationDoc.exists()) {
@@ -75,16 +75,24 @@ const VolunteerTaskManager = () => {
       console.error('Error syncing Foodstatus:', error);
     }
   };
-  
+
   const cancelTask = async (taskId, recipientId) => {
     try {
       // Remove the task from the volunteer's task collection
       const taskRef = doc(db, `volunteers/${user.uid}/task`, taskId);
       await deleteDoc(taskRef);
 
-      // Remove the task from the recipient's availablefood collection
-      const recipientFoodRef = doc(db, `recipients/${recipientId}/availablefood`, taskId);
-      await deleteDoc(recipientFoodRef);
+      // Remove the notification from the donor's notifications collection
+      const donorsSnapshot = await getDocs(collection(db, 'donors'));
+      for (const donorDoc of donorsSnapshot.docs) {
+        const donorId = donorDoc.id;
+        const notificationRef = doc(db, `donors/${donorId}/notifications`, taskId);
+        const notificationDoc = await getDoc(notificationRef);
+        if (notificationDoc.exists()) {
+          await deleteDoc(notificationRef);
+          console.log(`Notification deleted for task ${taskId} in donors/${donorId}/notifications`);
+        }
+      }
 
       setMyTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
     } catch (error) {
@@ -138,7 +146,12 @@ const VolunteerTaskManager = () => {
                       <td className="py-2 px-4 space-x-2">
                         <button
                           onClick={() => cancelTask(task.id, task.recipientId)}
-                          className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                          className={`px-4 py-2 rounded ${
+                            task.Foodstatus === 'Delivered'
+                              ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
+                              : 'bg-red-500 text-white hover:bg-red-600'
+                          }`}
+                          disabled={task.Foodstatus === 'Delivered'}
                         >
                           Cancel
                         </button>
