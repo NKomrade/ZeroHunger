@@ -1,16 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getFirestore, collection, onSnapshot, updateDoc, doc, deleteDoc, getDoc, getDocs } from 'firebase/firestore';
+import {
+  getFirestore,
+  collection,
+  onSnapshot,
+  updateDoc,
+  doc,
+  deleteDoc,
+  getDoc,
+  getDocs,
+} from 'firebase/firestore';
 import { useUserContext } from '../context/usercontext';
+import VolunteerCertificate from './VolunteerCertificate';
 
 const db = getFirestore();
 
 const VolunteerSidebar = () => (
   <div className="fixed w-64 bg-blue-500 text-white h-screen flex flex-col p-4">
     <nav className="flex flex-col space-y-4">
-      <Link to="/volunteer/dashboard" className="hover:bg-blue-600 p-2 rounded">Dashboard Overview</Link>
-      <Link to="/volunteer/tasks" className="hover:bg-blue-600 p-2 rounded">My Tasks</Link>
-      <Link to="/volunteer/profile" className="hover:bg-blue-600 p-2 rounded">Profile</Link>
+      <Link to="/volunteer/dashboard" className="hover:bg-blue-600 p-2 rounded">
+        Dashboard Overview
+      </Link>
+      <Link to="/volunteer/tasks" className="hover:bg-blue-600 p-2 rounded">
+        My Tasks
+      </Link>
+      <Link to="/volunteer/profile" className="hover:bg-blue-600 p-2 rounded">
+        Profile
+      </Link>
     </nav>
   </div>
 );
@@ -19,7 +35,10 @@ const VolunteerNavbar = () => (
   <nav className="bg-blue-500 p-4 flex justify-between items-center sticky top-0 z-50">
     <div className="text-white font-bold text-lg">ZeroHunger</div>
     <div>
-      <Link to="/" className="text-white px-4 py-2 rounded-full hover:text-black hover:bg-neutral-200 transition duration-200">
+      <Link
+        to="/"
+        className="text-white px-4 py-2 rounded-full hover:text-black hover:bg-neutral-200 transition duration-200"
+      >
         Sign out as Volunteer
       </Link>
     </div>
@@ -29,6 +48,9 @@ const VolunteerNavbar = () => (
 const VolunteerTaskManager = () => {
   const { user } = useUserContext();
   const [myTasks, setMyTasks] = useState([]);
+  const [showCertificateNotification, setShowCertificateNotification] = useState(false);
+  const [volunteerName, setVolunteerName] = useState('');
+  const [showConfetti, setShowConfetti] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -41,9 +63,11 @@ const VolunteerTaskManager = () => {
         setMyTasks(tasksData);
       },
       (error) => {
-        console.error("Error with snapshot listener:", error);
+        console.error('Error with snapshot listener:', error);
       }
     );
+
+    setVolunteerName(user.name || 'Volunteer');
 
     return () => unsubscribe();
   }, [user]);
@@ -52,37 +76,44 @@ const VolunteerTaskManager = () => {
     const newStatus = currentStatus === 'Pending' ? 'Delivered' : 'Pending';
 
     try {
-      // Update Foodstatus in volunteer's task collection
       const taskRef = doc(db, `volunteers/${user.uid}/task`, taskId);
       await updateDoc(taskRef, { Foodstatus: newStatus });
 
       console.log(`Foodstatus updated to ${newStatus} in volunteers/task for task ${taskId}`);
 
-      // Update Foodstatus in the corresponding donor's notifications collection
       const donorsSnapshot = await getDocs(collection(db, 'donors'));
       for (const donorDoc of donorsSnapshot.docs) {
         const donorId = donorDoc.id;
         const notificationRef = doc(db, `donors/${donorId}/notifications`, taskId);
 
-        // Check if the notification exists
         const notificationDoc = await getDoc(notificationRef);
         if (notificationDoc.exists()) {
           await updateDoc(notificationRef, { Foodstatus: newStatus });
-          console.log(`Foodstatus updated to ${newStatus} in donors/${donorId}/notifications for task ${taskId}`);
+          console.log(
+            `Foodstatus updated to ${newStatus} in donors/${donorId}/notifications for task ${taskId}`
+          );
         }
+      }
+
+      if (newStatus === 'Delivered') {
+        setShowCertificateNotification(true);
+        setShowConfetti(true);
       }
     } catch (error) {
       console.error('Error syncing Foodstatus:', error);
     }
   };
 
-  const cancelTask = async (taskId, recipientId) => {
+  const handleCertificateDownload = () => {
+    setShowCertificateNotification(false);
+    setShowConfetti(false);
+  };
+
+  const cancelTask = async (taskId) => {
     try {
-      // Remove the task from the volunteer's task collection
       const taskRef = doc(db, `volunteers/${user.uid}/task`, taskId);
       await deleteDoc(taskRef);
 
-      // Remove the notification from the donor's notifications collection
       const donorsSnapshot = await getDocs(collection(db, 'donors'));
       for (const donorDoc of donorsSnapshot.docs) {
         const donorId = donorDoc.id;
@@ -96,7 +127,7 @@ const VolunteerTaskManager = () => {
 
       setMyTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
     } catch (error) {
-      console.error("Error cancelling task:", error);
+      console.error('Error cancelling task:', error);
     }
   };
 
@@ -145,7 +176,7 @@ const VolunteerTaskManager = () => {
                       </td>
                       <td className="py-2 px-4 space-x-2">
                         <button
-                          onClick={() => cancelTask(task.id, task.recipientId)}
+                          onClick={() => cancelTask(task.id)}
                           className={`px-4 py-2 rounded ${
                             task.Foodstatus === 'Delivered'
                               ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
@@ -162,6 +193,14 @@ const VolunteerTaskManager = () => {
               </table>
             )}
           </div>
+
+          {showCertificateNotification && (
+            <VolunteerCertificate
+              volunteerName={volunteerName}
+              showConfetti={showConfetti}
+              onDownloadComplete={handleCertificateDownload}
+            />
+          )}
         </div>
       </div>
     </div>
