@@ -58,32 +58,33 @@ const RequestFood = () => {
 
   const handlePickupOption = async (food, pickupType) => {
     const recipientWants = pickupType === 'self' ? 'Self Pickup' : 'Want a Volunteer';
-
+  
     if (!user || !user.uid || !food) {
       console.error('User is not authenticated or food information is missing.');
       return;
     }
-
+  
     try {
       const recipientFoodRef = doc(db, `recipients/${user.uid}/availablefood`, food.id);
       const existingDoc = await getDoc(recipientFoodRef);
-
+  
       if (!existingDoc.exists()) {
         const recipientDocRef = doc(db, 'recipients', user.uid);
         const recipientDoc = await getDoc(recipientDocRef);
-
+  
         if (!recipientDoc.exists()) {
           console.error('Recipient profile data not found in Firestore.');
           return;
         }
-
+  
         const recipientData = recipientDoc.data();
-
+  
         // Save data to recipient's availablefood collection
         await setDoc(recipientFoodRef, {
           ...food,
           orderDate: new Date().toISOString().split('T')[0],
           recipientWants,
+          Foodstatus: 'Pending', // Initial Foodstatus
           recipientName: recipientData.name,
           recipientPhone: recipientData.mobile,
           recipientEmail: recipientData.email,
@@ -91,15 +92,16 @@ const RequestFood = () => {
           recipientPincode: recipientData.pincode,
           recipientProfilePicture: recipientData.profilePicture,
         });
-
+  
         console.log(`${recipientWants} request saved to recipient's availablefood collection.`);
-
+  
         // Save data to donor's notifications collection
         const donorNotificationRef = doc(db, `donors/${food.donorId}/notifications`, food.id);
         await setDoc(donorNotificationRef, {
           ...food,
           orderDate: new Date().toISOString().split('T')[0],
           recipientWants,
+          Foodstatus: 'Pending', // Initial Foodstatus
           recipientName: recipientData.name,
           recipientPhone: recipientData.mobile,
           recipientEmail: recipientData.email,
@@ -107,9 +109,9 @@ const RequestFood = () => {
           recipientPincode: recipientData.pincode,
           recipientProfilePicture: recipientData.profilePicture,
         });
-
+  
         console.log('Data saved to donor\'s notifications collection.');
-
+  
         navigate('/recipient/dashboard');
       } else {
         alert('You have already requested this food item.');
@@ -117,7 +119,7 @@ const RequestFood = () => {
     } catch (error) {
       console.error(`Error saving ${recipientWants} request:`, error);
     }
-  };
+  };  
 
   if (loading) {
     return (

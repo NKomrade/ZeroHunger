@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getFirestore, collection, onSnapshot, updateDoc, doc, deleteDoc } from 'firebase/firestore';
+import { getFirestore, collection, onSnapshot, updateDoc, doc, deleteDoc, getDoc, getDocs } from 'firebase/firestore';
 import { useUserContext } from '../context/usercontext';
 
 const db = getFirestore();
@@ -32,7 +32,7 @@ const VolunteerTaskManager = () => {
 
   useEffect(() => {
     if (!user) return;
-
+  
     const tasksRef = collection(db, `volunteers/${user.uid}/task`);
     const unsubscribe = onSnapshot(
       tasksRef,
@@ -44,26 +44,48 @@ const VolunteerTaskManager = () => {
         console.error("Error with snapshot listener:", error);
       }
     );
-
+  
     return () => unsubscribe();
   }, [user]);
-
-  const toggleStatus = async (taskId, currentStatus) => {
+  
+  const toggleFoodstatus = async (taskId, currentStatus) => {
     const newStatus = currentStatus === 'Pending' ? 'Delivered' : 'Pending';
-    const taskRef = doc(db, `volunteers/${user.uid}/task`, taskId);
-
+  
     try {
-      await updateDoc(taskRef, { status: newStatus });
+      // Update Foodstatus in volunteer's task collection
+      const taskRef = doc(db, `volunteers/${user.uid}/task`, taskId);
+      await updateDoc(taskRef, { Foodstatus: newStatus });
+  
+      console.log(`Foodstatus updated to ${newStatus} in volunteers/task for task ${taskId}`);
+  
+      // Update Foodstatus in the corresponding donor's notifications collection
+      const donorsSnapshot = await getDocs(collection(db, 'donors'));
+      for (const donorDoc of donorsSnapshot.docs) {
+        const donorId = donorDoc.id;
+        const notificationRef = doc(db, `donors/${donorId}/notifications`, taskId);
+  
+        // Check if the notification exists
+        const notificationDoc = await getDoc(notificationRef);
+        if (notificationDoc.exists()) {
+          await updateDoc(notificationRef, { Foodstatus: newStatus });
+          console.log(`Foodstatus updated to ${newStatus} in donors/${donorId}/notifications for task ${taskId}`);
+        }
+      }
     } catch (error) {
-      console.error("Error updating status:", error);
+      console.error('Error syncing Foodstatus:', error);
     }
   };
-
-  const cancelTask = async (taskId) => {
-    const taskRef = doc(db, `volunteers/${user.uid}/task`, taskId);
-
+  
+  const cancelTask = async (taskId, recipientId) => {
     try {
+      // Remove the task from the volunteer's task collection
+      const taskRef = doc(db, `volunteers/${user.uid}/task`, taskId);
       await deleteDoc(taskRef);
+
+      // Remove the task from the recipient's availablefood collection
+      const recipientFoodRef = doc(db, `recipients/${recipientId}/availablefood`, taskId);
+      await deleteDoc(recipientFoodRef);
+
       setMyTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
     } catch (error) {
       console.error("Error cancelling task:", error);
@@ -105,14 +127,19 @@ const VolunteerTaskManager = () => {
                       <td className="py-2 px-4">{task.recipientAddress || 'Unknown Address'}</td>
                       <td className="py-2 px-4">
                         <button
-                          onClick={() => toggleStatus(task.id, task.status)}
-                          className={`px-4 py-2 rounded ${task.status === 'Pending' ? 'bg-yellow-500' : 'bg-green-500'} text-white hover:opacity-75`}
+                          onClick={() => toggleFoodstatus(task.id, task.Foodstatus)}
+                          className={`px-4 py-2 rounded ${
+                            task.Foodstatus === 'Pending' ? 'bg-yellow-500' : 'bg-green-500'
+                          } text-white hover:opacity-75`}
                         >
-                          {task.status}
+                          {task.Foodstatus || 'Pending'}
                         </button>
                       </td>
                       <td className="py-2 px-4 space-x-2">
-                        <button onClick={() => cancelTask(task.id)} className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                        <button
+                          onClick={() => cancelTask(task.id, task.recipientId)}
+                          className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                        >
                           Cancel
                         </button>
                       </td>

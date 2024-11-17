@@ -138,7 +138,6 @@ const RecipientDashboard = () => {
         <RecipientSidebar />
         <div className="flex-grow p-6 ml-64">
           <h1 className="text-4xl font-bold mb-6 text-blue-500">Recipient Dashboard</h1>
-
           <div className="mb-8">
             <h2 className="text-3xl font-semibold mb-4">My Requests</h2>
             <div className="bg-gray-50 shadow rounded-lg p-4">
@@ -153,8 +152,7 @@ const RecipientDashboard = () => {
                       <th className="border-b py-2 px-4">Food Type</th>
                       <th className="border-b py-2 px-4">Quantity</th>
                       <th className="border-b py-2 px-4">Donor Name</th>
-                      <th className="border-b py-2 px-4">Pincode</th>
-                      <th className="border-b py-2 px-4">Status</th>
+                      <th className="border-b py-2 px-4">You Want?</th>
                       <th className="border-b py-2 px-4">Volunteer</th>
                       <th className="border-b py-2 px-4">Actions</th>
                     </tr>
@@ -167,13 +165,25 @@ const RecipientDashboard = () => {
                         <td className="py-2 px-4">{request.foodType}</td>
                         <td className="py-2 px-4">{request.quantity}</td>
                         <td className="py-2 px-4">{request.donorName}</td>
-                        <td className="py-2 px-4">{request.pincode}</td>
                         <td className="py-2 px-4">{request.recipientWants}</td>
-                        <td className="py-2 px-4">{request.volunteer}</td>
+                        <td className="py-2 px-4">
+                          {request.recipientWants === 'Self Pickup'
+                            ? 'Self'
+                            : request.volunteer || 'Not Assigned'}
+                        </td>
                         <td className="py-2 px-4 space-x-2">
                           <button
                             onClick={() => handleReject(request.id)}
-                            className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                            disabled={
+                              request.recipientWants === 'Self Pickup' || 
+                              (request.volunteer && request.volunteer !== 'Not Assigned' && request.volunteer !== 'NULL')
+                            }
+                            className={`px-4 py-2 rounded ${
+                              request.recipientWants === 'Self Pickup' ||
+                              (request.volunteer && request.volunteer !== 'Not Assigned' && request.volunteer !== 'NULL')
+                                ? 'bg-gray-400 cursor-not-allowed'
+                                : 'bg-red-500 hover:bg-red-600 text-white'
+                            }`}
                           >
                             Reject
                           </button>

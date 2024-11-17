@@ -60,19 +60,22 @@ const AvailableTasks = () => {
 
   const acceptTask = async (task) => {
     if (!user) return;
-
+  
     try {
       // Fetch volunteer details
       const volunteerRef = doc(db, `volunteers/${user.uid}`);
       const volunteerDoc = await getDoc(volunteerRef);
-
+  
       if (!volunteerDoc.exists()) {
         console.error("Volunteer details not found.");
         return;
       }
-
+  
       const volunteerData = volunteerDoc.data();
-
+  
+      // Format the current date as yyyy-mm-dd
+      const formattedDate = new Date().toISOString().split('T')[0];
+  
       // Prepare volunteer task data
       const taskData = {
         ...task,
@@ -81,26 +84,26 @@ const AvailableTasks = () => {
         volunteerEmail: volunteerData.email || 'N/A',
         volunteerPhone: volunteerData.mobile || 'N/A',
         volunteerProfilePicture: volunteerData.profilePicture || 'N/A',
-        recipientWants: 'Volunteer Assigned', // Update recipient's preference
-        acceptedDate: new Date().toISOString(),
+        recipientWants: 'Want a Volunteer', 
+        acceptedDate: formattedDate, // Use formatted date here
       };
-
+  
       // Update the corresponding recipient's availablefood document
       const recipientFoodRef = doc(db, `recipients/${task.recipientId}/availablefood`, task.id);
       await setDoc(recipientFoodRef, taskData);
-
+  
       // Save data to the volunteer's task collection
       const volunteerTaskRef = doc(db, `volunteers/${user.uid}/task`, task.id);
       await setDoc(volunteerTaskRef, taskData);
-
+  
       // Save a notification in the donor's notifications collection
       const donorNotificationRef = doc(db, `donors/${task.donorId}/notifications`, task.id);
       await setDoc(donorNotificationRef, {
         ...taskData,
         notificationType: 'Task Accepted',
-        notificationDate: new Date().toISOString(),
+        notificationDate: formattedDate, // Use formatted date here
       });
-
+  
       console.log("Task successfully updated and notifications sent.");
       alert(`You have accepted the task: ${task.foodName}`);
       setSelectedTask(null);
@@ -108,7 +111,7 @@ const AvailableTasks = () => {
     } catch (error) {
       console.error('Error accepting task:', error);
     }
-  };
+  };  
 
   const openDetailsModal = (task) => {
     setSelectedTask(task);

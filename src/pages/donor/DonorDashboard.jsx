@@ -73,6 +73,7 @@ const DonorDashboard = () => {
           notifications[doc.id] = {
             recipientName: data.recipientName || 'N/A',
             volunteerName: data.volunteerName || 'N/A',
+            foodStatus: data.Foodstatus || '-', // Fetching Foodstatus
           };
         });
 
@@ -85,6 +86,7 @@ const DonorDashboard = () => {
             ...data,
             recipientName: notification.recipientName,
             volunteerName: notification.volunteerName,
+            foodStatus: notification.foodStatus,
           };
         });
 
@@ -127,17 +129,6 @@ const DonorDashboard = () => {
 
       // Hide confetti after a short delay
       setTimeout(() => setShowConfetti(false), 5000);
-    }
-  };
-
-  const toggleStatus = async (donationId, currentStatus) => {
-    const newStatus = currentStatus === 'Delivered' ? 'In Transit' : 'Delivered';
-    const donationDocRef = doc(db, `donors/${user.uid}/donorschedule`, donationId);
-
-    try {
-      await updateDoc(donationDocRef, { status: newStatus });
-    } catch (error) {
-      console.error('Error updating status:', error);
     }
   };
 
@@ -208,6 +199,7 @@ const DonorDashboard = () => {
                       <th className="border-b py-2 px-4">Quantity</th>
                       <th className="border-b py-2 px-4">Recipient Name</th>
                       <th className="border-b py-2 px-4">Volunteer Name</th>
+                      <th className="border-b py-2 px-4">Status</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -220,6 +212,7 @@ const DonorDashboard = () => {
                         <td className="py-2 px-4">{donation.quantity}</td>
                         <td className="py-2 px-4">{donation.recipientName}</td>
                         <td className="py-2 px-4">{donation.volunteerName}</td>
+                        <td className="py-2 px-4">{donation.foodStatus}</td>
                       </tr>
                     ))}
                   </tbody>
