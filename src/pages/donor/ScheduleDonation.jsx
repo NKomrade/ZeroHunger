@@ -12,8 +12,9 @@ const ScheduleDonation = () => {
   const todayDate = new Date().toISOString().split('T')[0];
   const [newDonation, setNewDonation] = useState({
     foodName: '',
-    foodType: '',
+    foodType: 'Veg',
     quantity: '',
+    quantityUnit: 'Kg',
     date: todayDate,
     timeFrom: '',
     timeTo: '',
@@ -64,6 +65,7 @@ const ScheduleDonation = () => {
       const donationData = {
         ...newDonation,
         foodImage: foodImageUrl,
+        quantity: `${newDonation.quantity} ${newDonation.quantityUnit}`,
         donatorId: user.uid, // Use the user's UID for reference
       };
   
@@ -78,8 +80,9 @@ const ScheduleDonation = () => {
       // Reset the form
       setNewDonation({
         foodName: '',
-        foodType: '',
+        foodType: 'Veg',
         quantity: '',
+        quantityUnit: 'Kg',
         date: todayDate,
         timeFrom: '',
         timeTo: '',
@@ -129,7 +132,7 @@ const ScheduleDonation = () => {
             <form onSubmit={handleSubmit}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label htmlFor="date" className="block text-sm font-medium mb-2">Date</label>
+                  <label htmlFor="date" className="block text-sm font-medium mb-2">Date<span className="text-red-400"> *</span></label>
                   <input
                     type="date"
                     id="date"
@@ -141,7 +144,7 @@ const ScheduleDonation = () => {
                   />
                 </div>
                 <div>
-                  <label htmlFor="foodName" className="block text-sm font-medium mb-2">Food Name</label>
+                  <label htmlFor="foodName" className="block text-sm font-medium mb-2">Food Name<span className="text-red-400"> *</span></label>
                   <input
                     type="text"
                     id="foodName"
@@ -155,35 +158,53 @@ const ScheduleDonation = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="foodType" className="block text-sm font-medium mb-2">Food Type</label>
-                  <input
-                    type="text"
+                  <label htmlFor="foodType" className="block text-sm font-medium mb-2">Food Type<span className="text-red-400"> *</span></label>
+                  <select
                     id="foodType"
                     name="foodType"
                     value={newDonation.foodType}
                     onChange={handleInputChange}
                     className="w-full border rounded p-2"
-                    placeholder="Enter the food type"
                     required
-                  />
+                  >
+                    <option value="Veg">Veg</option>
+                    <option value="Non-Veg">Non-Veg</option>
+                  </select>
                 </div>
 
                 <div>
-                  <label htmlFor="quantity" className="block text-sm font-medium mb-2">Quantity</label>
-                  <input
-                    type="text"
-                    id="quantity"
-                    name="quantity"
-                    value={newDonation.quantity}
-                    onChange={handleInputChange}
-                    className="w-full border rounded p-2"
-                    placeholder="Enter the quantity"
-                    required
-                  />
+                  <label htmlFor="quantity" className="block text-sm font-medium mb-2">
+                    Quantity<span className="text-red-400"> *</span>
+                  </label>
+                  <div className="flex">
+                    <input
+                      type="number"
+                      id="quantity"
+                      name="quantity"
+                      value={newDonation.quantity}
+                      onChange={handleInputChange}
+                      className="w-3/4 border rounded-l p-2"
+                      placeholder="Enter quantity"
+                      required
+                    />
+                    <select
+                      id="quantityUnit"
+                      name="quantityUnit"
+                      value={newDonation.quantityUnit}
+                      onChange={handleInputChange}
+                      className="w-1/4 border rounded-r p-2"
+                      required
+                    >
+                      <option value="Kg">Kg</option>
+                      <option value="Packets">Packets</option>
+                      <option value="Liters">Liters</option>
+                      <option value="Cans">Cans</option>
+                    </select>
+                  </div>
                 </div>
 
                 <div>
-                  <label htmlFor="foodImage" className="block text-sm font-medium mb-2">Upload Food Image</label>
+                  <label htmlFor="foodImage" className="block text-sm font-medium mb-2">Upload Food Image<span className="text-red-400"> *</span></label>
                   <input
                     type="file"
                     id="foodImage"
@@ -195,7 +216,7 @@ const ScheduleDonation = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="timeFrom" className="block text-sm font-medium mb-2">Pickup Time (From)</label>
+                  <label htmlFor="timeFrom" className="block text-sm font-medium mb-2">Pickup Time (From)<span className="text-red-400"> *</span></label>
                   <input
                     type="time"
                     id="timeFrom"
@@ -208,7 +229,7 @@ const ScheduleDonation = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="timeTo" className="block text-sm font-medium mb-2">Pickup Time (To)</label>
+                  <label htmlFor="timeTo" className="block text-sm font-medium mb-2">Pickup Time (To)<span className="text-red-400"> *</span></label>
                   <input
                     type="time"
                     id="timeTo"
@@ -221,7 +242,7 @@ const ScheduleDonation = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="address" className="block text-sm font-medium mb-2">Address</label>
+                  <label htmlFor="address" className="block text-sm font-medium mb-2">Address<span className="text-red-400"> *</span></label>
                   <input
                     type="text"
                     id="address"
@@ -235,7 +256,7 @@ const ScheduleDonation = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="pincode" className="block text-sm font-medium mb-2">Pincode</label>
+                  <label htmlFor="pincode" className="block text-sm font-medium mb-2">Pincode<span className="text-red-400"> *</span></label>
                   <input
                     type="text"
                     id="pincode"

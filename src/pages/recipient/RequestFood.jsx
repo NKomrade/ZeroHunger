@@ -15,47 +15,86 @@ const RequestFood = () => {
   useEffect(() => {
     const fetchFoodRequests = async () => {
       try {
+        console.log('Fetching food requests...');
         const donorSnapshot = await getDocs(collection(db, 'donors'));
+        
         if (donorSnapshot.empty) {
+          console.log('No donors found in the Firestore collection.');
           setLoading(false);
           return;
         }
-
+  
         const requests = [];
+        const currentDate = new Date().toISOString().split('T')[0];
+        const currentTime = new Date().toTimeString().split(' ')[0].substring(0, 5); // Get HH:MM format
+  
+        console.log(`Current Date: ${currentDate}`);
+        console.log(`Current Time: ${currentTime}`);
+  
         for (const donorDoc of donorSnapshot.docs) {
           const donorId = donorDoc.id;
           const donorData = donorDoc.data();
-
+  
+          console.log(`Checking donor: ${donorId}, Name: ${donorData.name}`);
+  
           const donorscheduleSnapshot = await getDocs(collection(db, `donors/${donorId}/donorschedule`));
+  
+          if (donorscheduleSnapshot.empty) {
+            console.log(`No schedules found for donor: ${donorId}`);
+          }
+  
           donorscheduleSnapshot.forEach((donationDoc) => {
             const donationData = donationDoc.data();
-            requests.push({
-              id: donationDoc.id,
-              donorId,
-              donorName: donorData.name || 'Unknown',
-              donorEmail: donorData.email || 'N/A',
-              donorMobile: donorData.mobile || 'N/A',
-              donorAddress: donorData.address || 'Unknown Address',
-              donorProfilePicture: donorData.profilePicture || '',
-              foodName: donationData.foodName,
-              foodType: donationData.foodType,
-              quantity: donationData.quantity,
-              location: donationData.address || 'Unknown Location',
-              pincode: donationData.pincode || 'N/A',
-              expiryDate: donationData.date || '',
-              image: donationData.foodImage || '',
-            });
+  
+            console.log(`Checking donation: ${donationDoc.id}, Food Name: ${donationData.foodName}`);
+            console.log(`Donation Date: ${donationData.date}, Pickup Time (To): ${donationData.timeTo}`);
+  
+            // Normalize `timeTo` for comparison
+            const timeTo = donationData.timeTo.substring(0, 5); // Get HH:MM format
+  
+            // Filter based on current date and time conditions
+            if (
+              donationData.date === currentDate && 
+              timeTo >= currentTime
+            ) {
+              console.log(`Adding donation: ${donationDoc.id} to the requests list.`);
+              requests.push({
+                id: donationDoc.id,
+                donorId,
+                donorName: donorData.name || 'Unknown',
+                donorEmail: donorData.email || 'N/A',
+                donorMobile: donorData.mobile || 'N/A',
+                donorAddress: donorData.address || 'Unknown Address',
+                donorProfilePicture: donorData.profilePicture || '',
+                foodName: donationData.foodName,
+                foodType: donationData.foodType,
+                quantity: donationData.quantity,
+                location: donationData.address || 'Unknown Location',
+                pincode: donationData.pincode || 'N/A',
+                expiryDate: donationData.date || '',
+                image: donationData.foodImage || '',
+                timeFrom: donationData.timeFrom, // Include timeFrom
+                timeTo: donationData.timeTo,     // Include timeTo
+              });              
+            } else {
+              console.log(
+                `Skipping donation: ${donationDoc.id}. It does not match the date and time criteria.`
+              );
+            }
           });
         }
+        
+        console.log('Final filtered requests:', requests);
         setFoodRequests(requests);
       } catch (error) {
         console.error('Error fetching food requests:', error);
       }
       setLoading(false);
     };
+  
     fetchFoodRequests();
   }, []);
-
+      
   const handlePickupOption = async (food, pickupType) => {
     const recipientWants = pickupType === 'self' ? 'Self Pickup' : 'Want a Volunteer';
   
@@ -65,6 +104,7 @@ const RequestFood = () => {
     }
   
     try {
+      console.log('Food object in handlePickupOption:', food); // Debug log
       const recipientFoodRef = doc(db, `recipients/${user.uid}/availablefood`, food.id);
       const existingDoc = await getDoc(recipientFoodRef);
   
@@ -79,18 +119,28 @@ const RequestFood = () => {
   
         const recipientData = recipientDoc.data();
   
+        // Extract timeFrom and timeTo
+        const pickupTimeFrom = food.timeFrom || 'Not Specified';
+        const pickupTimeTo = food.timeTo || 'Not Specified';
+  
+        console.log(`Pickup Time From: ${pickupTimeFrom}`);
+        console.log(`Pickup Time To: ${pickupTimeTo}`);
+  
         // Save data to recipient's availablefood collection
+        const formattedDate = new Date().toISOString().split('T')[0];
         await setDoc(recipientFoodRef, {
           ...food,
-          orderDate: new Date().toISOString().split('T')[0],
+          orderDate: formattedDate,
           recipientWants,
-          Foodstatus: 'Pending', // Initial Foodstatus
+          Foodstatus: 'Pending',
           recipientName: recipientData.name,
           recipientPhone: recipientData.mobile,
           recipientEmail: recipientData.email,
           recipientAddress: recipientData.address,
           recipientPincode: recipientData.pincode,
           recipientProfilePicture: recipientData.profilePicture,
+          pickupTimeFrom,
+          pickupTimeTo,
         });
   
         console.log(`${recipientWants} request saved to recipient's availablefood collection.`);
@@ -99,18 +149,23 @@ const RequestFood = () => {
         const donorNotificationRef = doc(db, `donors/${food.donorId}/notifications`, food.id);
         await setDoc(donorNotificationRef, {
           ...food,
-          orderDate: new Date().toISOString().split('T')[0],
+          orderDate: formattedDate,
           recipientWants,
-          Foodstatus: 'Pending', // Initial Foodstatus
+          Foodstatus: 'Pending',
           recipientName: recipientData.name,
           recipientPhone: recipientData.mobile,
           recipientEmail: recipientData.email,
           recipientAddress: recipientData.address,
           recipientPincode: recipientData.pincode,
           recipientProfilePicture: recipientData.profilePicture,
+          pickupTimeFrom,
+          pickupTimeTo,
         });
   
         console.log('Data saved to donor\'s notifications collection.');
+  
+        // Show confirmation popup
+        alert(`A request has been scheduled from ${pickupTimeFrom} to ${pickupTimeTo} on ${formattedDate}.`);
   
         navigate('/recipient/dashboard');
       } else {
@@ -120,7 +175,7 @@ const RequestFood = () => {
       console.error(`Error saving ${recipientWants} request:`, error);
     }
   };  
-
+  
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -135,7 +190,7 @@ const RequestFood = () => {
         <div className="text-white font-bold text-lg">ZeroHunger - Request Food</div>
         <div>
           <Link to="/" className="text-white px-4 py-2 rounded-full hover:text-black hover:bg-neutral-200 transition duration-200">
-            Sign out
+            Sign out as Recipient
           </Link>
         </div>
       </nav>

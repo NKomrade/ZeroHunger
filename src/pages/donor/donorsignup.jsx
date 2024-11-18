@@ -207,7 +207,7 @@ export default function DonorSignup({ setUserRole }) {
             </div>
 
             {/* Address Field */}
-            <div className="mb-4">
+            <div className="col-span-1 md:col-span-2 mb-4">
               <label className="block text-neutral-900 mb-1" htmlFor="address">Address</label>
               <input
                 type="text"

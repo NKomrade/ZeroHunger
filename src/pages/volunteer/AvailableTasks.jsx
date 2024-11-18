@@ -15,23 +15,40 @@ const AvailableTasks = () => {
   useEffect(() => {
     const fetchTasks = async () => {
       if (loading || !user) {
-        console.log("User context is still loading or user is not available.");
+        console.log('User context is still loading or user is not available.');
         return;
       }
-
+  
       try {
-        console.log("Fetching tasks where recipient wants a volunteer.");
+        console.log('Fetching tasks where recipient wants a volunteer and criteria match.');
         const allTasks = [];
+        const currentDate = new Date().toISOString().split('T')[0];
+        const currentTime = new Date().toTimeString().split(' ')[0].substring(0, 5); // Get HH:MM format
+  
+        console.log(`Current Date: ${currentDate}`);
+        console.log(`Current Time: ${currentTime}`);
+  
         const recipientSnapshot = await getDocs(collection(db, 'recipients'));
-
+  
         for (const recipientDoc of recipientSnapshot.docs) {
           const recipientData = recipientDoc.data();
           const availableFoodSnapshot = await getDocs(collection(db, `recipients/${recipientDoc.id}/availablefood`));
-
+  
           for (const foodDoc of availableFoodSnapshot.docs) {
             const foodData = foodDoc.data();
-
-            if (foodData.recipientWants === 'Want a Volunteer') {
+  
+            // Log food item details
+            console.log(`Checking food item: ${foodDoc.id}`);
+            console.log(`RecipientWants: ${foodData.recipientWants}, Expiry Date: ${foodData.expiryDate}, Pickup Time (To): ${foodData.timeTo}`);
+  
+            // Filter by recipientWants, expiry date, and pickup time (to)
+            const timeTo = foodData.timeTo?.substring(0, 5) || ''; // Normalize HH:MM format
+            if (
+              foodData.recipientWants === 'Want a Volunteer' &&
+              foodData.expiryDate === currentDate &&
+              timeTo >= currentTime
+            ) {
+              console.log(`Adding task for food ${foodData.foodName} from recipient ${recipientData.name}`);
               allTasks.push({
                 id: foodDoc.id,
                 recipientId: recipientDoc.id, // Store recipientId for later updates
@@ -43,21 +60,22 @@ const AvailableTasks = () => {
                 foodPicture: foodData.image,
                 ...foodData,
               });
-              console.log(`Adding task for food ${foodData.foodName} from recipient ${recipientData.name}`);
+            } else {
+              console.log(`Skipping task for food ${foodData.foodName} due to unmatched criteria.`);
             }
           }
         }
-
+  
         setTasks(allTasks);
       } catch (error) {
         console.error('Error fetching tasks:', error);
       }
       setLoadingTasks(false);
     };
-
+  
     fetchTasks();
   }, [user, loading]);
-
+  
   const acceptTask = async (task) => {
     if (!user) return;
   
@@ -173,6 +191,15 @@ const AvailableTasks = () => {
                     <p className="text-gray-600">Food Type: {task.foodType}</p>
                     <p className="text-gray-600">Quantity: {task.quantity}</p>
                     <p className="text-gray-600">Pincode: {task.recipientPincode}</p>
+                    <p className="text-gray-600">
+                      Pickup From: <strong>{task.timeFrom || 'N/A'}</strong>
+                    </p>
+                    <p className="text-gray-600">
+                      Pickup To: <strong>{task.timeTo || 'N/A'}</strong>
+                    </p>
+                    <p className="text-gray-600">
+                      Date: <strong>{task.expiryDate || 'N/A'}</strong>
+                    </p>
                     <div className="flex justify-end mt-4">
                       <button
                         className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
