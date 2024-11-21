@@ -69,8 +69,8 @@ const DonorProfile = () => {
 
   const handleUploadPhoto = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      const storageRef = ref(storage, `donorphoto/${auth.currentUser.uid}`);
+    if (file && auth.currentUser.uid) {
+      const storageRef = ref(storage, `donorphoto/${auth.currentUser.uid}/profilePicture`);
       try {
         // Upload file to Firebase Storage
         await uploadBytes(storageRef, file);
